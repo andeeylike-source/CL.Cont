@@ -30,18 +30,8 @@
 
         const LANGUAGE_STORAGE_KEY = 'cc_language';
         const THEME_STORAGE_KEY = 'cc_theme';
-        const USER_PROFILE_STORAGE_KEY = 'cc_user_profile';
 
-        // ===== ПОЛЬЗОВАТЕЛЬСКИЕ НАСТРОЙКИ / I18N / SUPABASE =====
-        // Вставь сюда свои данные проекта Supabase.
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-        const SUPABASE_PROFILE_TABLE = 'profiles';
-
-        let supabaseClient = null;
-        let currentUser = null;
-        let isHydratingCloudSettings = false;
-
+        // ===== ПОЛЬЗОВАТЕЛЬСКИЕ НАСТРОЙКИ / I18N =====
         const translations = {
             ru: {
                 locale: 'ru-RU',
@@ -70,29 +60,6 @@
                 sidebarPreferencesTitle: '⚙️ Быстрые настройки',
                 languageLabel: 'Язык',
                 themeLabel: 'Тема',
-                authTitle: '🔐 Авторизация',
-                authDescription: 'Вход по email через magic link Supabase. Сессия сохраняется в браузере.',
-                supabaseHint: 'Перед запуском вставь свой Supabase URL и ANON KEY в app.js.',
-                authEmailLabel: 'Email',
-                authSignInBtn: '✉️ Войти по email',
-                authSignOutBtn: '↩️ Выйти',
-                profileSettingsTitle: '👤 Личный кабинет',
-                profileSettingsDescription: 'Здесь отображается email пользователя и сохраняется clan_name.',
-                profileEmailLabel: 'Email',
-                clanNameLabel: 'Clan name',
-                saveProfileBtn: '💾 Сохранить профиль',
-                authEmailPlaceholder: 'you@example.com',
-                clanNamePlaceholder: 'Мой клан',
-                authNotConfigured: 'Supabase пока не настроен: вставь URL и ANON KEY в app.js.',
-                authLoggedOut: 'Ты не авторизован.',
-                authLoggedInAs: 'Вход выполнен:',
-                authMagicLinkSent: 'Письмо со ссылкой для входа отправлено.',
-                authEnterEmail: 'Введи email для входа.',
-                authSignOutDone: 'Выход выполнен.',
-                profileSavedLocal: 'Профиль сохранён локально в браузере.',
-                profileSavedCloud: 'Профиль и настройки сохранены в Supabase.',
-                profileSyncError: 'Не удалось синхронизировать данные с Supabase.',
-                profileLoginRequired: 'Без авторизации clan_name сохраняется только локально.',
                 apiKeysTitle: '🔑 API ключи',
                 aliasesTitle: '🔗 Алиасы ников',
                 valueWeightsTitle: '⚖️ Веса ценности',
@@ -132,29 +99,6 @@
                 sidebarPreferencesTitle: '⚙️ Quick settings',
                 languageLabel: 'Language',
                 themeLabel: 'Theme',
-                authTitle: '🔐 Sign in',
-                authDescription: 'Email magic link sign-in via Supabase. Session is stored in the browser.',
-                supabaseHint: 'Before launch, set your Supabase URL and ANON KEY in app.js.',
-                authEmailLabel: 'Email',
-                authSignInBtn: '✉️ Sign in by email',
-                authSignOutBtn: '↩️ Sign out',
-                profileSettingsTitle: '👤 Profile',
-                profileSettingsDescription: 'Shows the current user email and stores clan_name.',
-                profileEmailLabel: 'Email',
-                clanNameLabel: 'Clan name',
-                saveProfileBtn: '💾 Save profile',
-                authEmailPlaceholder: 'you@example.com',
-                clanNamePlaceholder: 'My Clan',
-                authNotConfigured: 'Supabase is not configured yet: put URL and ANON KEY into app.js.',
-                authLoggedOut: 'You are not signed in.',
-                authLoggedInAs: 'Signed in as:',
-                authMagicLinkSent: 'Magic link email has been sent.',
-                authEnterEmail: 'Enter an email first.',
-                authSignOutDone: 'Signed out.',
-                profileSavedLocal: 'Profile saved locally in the browser.',
-                profileSavedCloud: 'Profile and preferences saved to Supabase.',
-                profileSyncError: 'Could not sync data with Supabase.',
-                profileLoginRequired: 'Without login, clan_name is stored locally only.',
                 apiKeysTitle: '🔑 API keys',
                 aliasesTitle: '🔗 Nick aliases',
                 valueWeightsTitle: '⚖️ Value weights',
@@ -173,105 +117,7 @@
             return translations[currentLanguage]?.[key] || translations.ru[key] || key;
         }
 
-        function isSupabaseConfigured() {
-            return !!(
-                window.supabase &&
-                SUPABASE_URL &&
-                SUPABASE_ANON_KEY &&
-                !SUPABASE_URL.includes('YOUR_SUPABASE_URL') &&
-                !SUPABASE_ANON_KEY.includes('YOUR_SUPABASE_ANON_KEY')
-            );
-        }
-
-        function getLocalProfile() {
-            try {
-                return JSON.parse(localStorage.getItem(USER_PROFILE_STORAGE_KEY) || '{"clan_name":""}');
-            } catch (e) {
-                return { clan_name: '' };
-            }
-        }
-
-        function saveLocalProfile(profile) {
-            try {
-                localStorage.setItem(USER_PROFILE_STORAGE_KEY, JSON.stringify({ clan_name: profile?.clan_name || '' }));
-            } catch (e) {}
-        }
-
-        function showSettingsStatus(id, message, isError = false) {
-            const el = document.getElementById(id);
-            if (!el) return;
-            el.style.display = message ? 'block' : 'none';
-            el.textContent = message || '';
-            el.style.borderColor = isError ? '#7f1d1d' : '';
-            el.style.color = isError ? '#fca5a5' : '';
-        }
-
-        function refreshProfileInputs() {
-            const localProfile = getLocalProfile();
-            const clanNameInput = document.getElementById('clanNameInput');
-            const profileEmailInput = document.getElementById('profileEmailInput');
-            if (clanNameInput && document.activeElement !== clanNameInput) clanNameInput.value = localProfile.clan_name || '';
-            if (profileEmailInput) profileEmailInput.value = currentUser?.email || '';
-        }
-
-        async function syncUserSettingsToSupabase(showSuccessMessage = false) {
-            if (!supabaseClient || !currentUser || isHydratingCloudSettings) return false;
-            try {
-                const localProfile = getLocalProfile();
-                const payload = {
-                    user_id: currentUser.id,
-                    email: currentUser.email,
-                    clan_name: localProfile.clan_name || '',
-                    language: currentLanguage,
-                    theme: currentTheme,
-                    updated_at: new Date().toISOString()
-                };
-                const { error } = await supabaseClient
-                    .from(SUPABASE_PROFILE_TABLE)
-                    .upsert(payload, { onConflict: 'user_id' });
-                if (error) throw error;
-                if (showSuccessMessage) showSettingsStatus('profileStatus', t('profileSavedCloud'));
-                return true;
-            } catch (e) {
-                console.warn('Supabase sync failed:', e);
-                if (showSuccessMessage) showSettingsStatus('profileStatus', t('profileSyncError'), true);
-                return false;
-            }
-        }
-
-        function updateAuthUI() {
-            const authEmailInput = document.getElementById('authEmailInput');
-            const signInBtn = document.getElementById('authSignInBtn');
-            const signOutBtn = document.getElementById('authSignOutBtn');
-            const saveProfileBtn = document.getElementById('saveProfileBtn');
-            const configured = isSupabaseConfigured();
-
-            refreshProfileInputs();
-
-            if (authEmailInput) {
-                authEmailInput.placeholder = t('authEmailPlaceholder');
-                if (!authEmailInput.value && currentUser?.email) authEmailInput.value = currentUser.email;
-            }
-            const clanNameInput = document.getElementById('clanNameInput');
-            if (clanNameInput) clanNameInput.placeholder = t('clanNamePlaceholder');
-
-            if (signInBtn) signInBtn.disabled = !configured;
-            if (signOutBtn) {
-                signOutBtn.disabled = !configured || !currentUser;
-                signOutBtn.style.opacity = (!configured || !currentUser) ? '.5' : '1';
-            }
-            if (saveProfileBtn) saveProfileBtn.disabled = false;
-
-            if (!configured) {
-                showSettingsStatus('authStatus', t('authNotConfigured'));
-            } else if (currentUser) {
-                showSettingsStatus('authStatus', `${t('authLoggedInAs')} ${currentUser.email}`);
-            } else {
-                showSettingsStatus('authStatus', t('authLoggedOut'));
-            }
-        }
-
-        function applyTheme(theme, options = {}) {
+        function applyTheme(theme) {
             currentTheme = theme === 'light' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', currentTheme);
             document.body?.classList.toggle('light-theme', currentTheme === 'light');
@@ -279,10 +125,9 @@
             try { localStorage.setItem(THEME_STORAGE_KEY, currentTheme); } catch (e) {}
             const themeSelect = document.getElementById('themeSelect');
             if (themeSelect) themeSelect.value = currentTheme;
-            if (!options.skipRemote) syncUserSettingsToSupabase();
         }
 
-        function applyLanguage(language, options = {}) {
+        function applyLanguage(language) {
             currentLanguage = translations[language] ? language : 'ru';
             document.documentElement.lang = currentLanguage;
             try { localStorage.setItem(LANGUAGE_STORAGE_KEY, currentLanguage); } catch (e) {}
@@ -320,17 +165,6 @@
                 sidebarPreferencesTitle: 'sidebarPreferencesTitle',
                 languageLabel: 'languageLabel',
                 themeLabel: 'themeLabel',
-                authTitle: 'authTitle',
-                authDescription: 'authDescription',
-                supabaseHint: 'supabaseHint',
-                authEmailLabel: 'authEmailLabel',
-                authSignInBtn: 'authSignInBtn',
-                authSignOutBtn: 'authSignOutBtn',
-                profileSettingsTitle: 'profileSettingsTitle',
-                profileSettingsDescription: 'profileSettingsDescription',
-                profileEmailLabel: 'profileEmailLabel',
-                clanNameLabel: 'clanNameLabel',
-                saveProfileBtn: 'saveProfileBtn',
                 apiKeysTitle: 'apiKeysTitle',
                 aliasesTitle: 'aliasesTitle',
                 valueWeightsTitle: 'valueWeightsTitle',
@@ -350,115 +184,17 @@
                     : 'Download a backup copy of all data';
             }
 
-            updateAuthUI();
             if (document.getElementById('calendarGrid')) renderCalendar();
             if (activeDayDate && document.getElementById('dayModal')?.style.display === 'flex') {
                 openDayModal(activeDayDate);
             }
-            if (!options.skipRemote) syncUserSettingsToSupabase();
-        }
-
-        async function signInWithMagicLink() {
-            if (!isSupabaseConfigured()) {
-                updateAuthUI();
-                return;
-            }
-            const email = document.getElementById('authEmailInput')?.value.trim();
-            if (!email) {
-                showSettingsStatus('authStatus', t('authEnterEmail'), true);
-                return;
-            }
-            try {
-                const { error } = await supabaseClient.auth.signInWithOtp({
-                    email,
-                    options: { emailRedirectTo: location.href.split('#')[0] }
-                });
-                if (error) throw error;
-                showSettingsStatus('authStatus', t('authMagicLinkSent'));
-            } catch (e) {
-                showSettingsStatus('authStatus', e.message || t('profileSyncError'), true);
-            }
-        }
-
-        async function signOutUser() {
-            if (!supabaseClient) return;
-            await supabaseClient.auth.signOut();
-            currentUser = null;
-            updateAuthUI();
-            showSettingsStatus('authStatus', t('authSignOutDone'));
-        }
-
-        async function saveProfileSettings() {
-            const clanName = document.getElementById('clanNameInput')?.value.trim() || '';
-            saveLocalProfile({ clan_name: clanName });
-            refreshProfileInputs();
-            if (!currentUser || !supabaseClient) {
-                showSettingsStatus('profileStatus', t('profileLoginRequired'));
-                return;
-            }
-            await syncUserSettingsToSupabase(true);
-        }
-
-        async function loadUserSettingsFromSupabase() {
-            if (!supabaseClient || !currentUser) return;
-            isHydratingCloudSettings = true;
-            try {
-                const { data, error, status } = await supabaseClient
-                    .from(SUPABASE_PROFILE_TABLE)
-                    .select('email, clan_name, language, theme')
-                    .eq('user_id', currentUser.id)
-                    .maybeSingle();
-                if (error && status !== 406) throw error;
-                if (data) {
-                    if (data.theme) applyTheme(data.theme, { skipRemote: true });
-                    if (data.language) applyLanguage(data.language, { skipRemote: true });
-                    saveLocalProfile({ clan_name: data.clan_name || '' });
-                    refreshProfileInputs();
-                } else {
-                    await syncUserSettingsToSupabase();
-                }
-            } catch (e) {
-                console.warn('Supabase load failed:', e);
-                showSettingsStatus('profileStatus', t('profileSyncError'), true);
-            } finally {
-                isHydratingCloudSettings = false;
-                updateAuthUI();
-            }
-        }
-
-        async function initSupabaseAuth() {
-            refreshProfileInputs();
-            updateAuthUI();
-            if (!isSupabaseConfigured()) return;
-
-            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-                auth: {
-                    persistSession: true,
-                    autoRefreshToken: true,
-                    detectSessionInUrl: true
-                }
-            });
-
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            currentUser = session?.user || null;
-            if (currentUser) await loadUserSettingsFromSupabase();
-            updateAuthUI();
-
-            supabaseClient.auth.onAuthStateChange(async (_event, session) => {
-                currentUser = session?.user || null;
-                if (currentUser) {
-                    await loadUserSettingsFromSupabase();
-                }
-                updateAuthUI();
-            });
         }
 
         function initUserPreferences() {
             const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'dark';
             const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY) || 'ru';
-            applyTheme(savedTheme, { skipRemote: true });
-            applyLanguage(savedLanguage, { skipRemote: true });
-            refreshProfileInputs();
+            applyTheme(savedTheme);
+            applyLanguage(savedLanguage);
 
             document.getElementById('themeSelect')?.addEventListener('change', (event) => {
                 applyTheme(event.target.value);
@@ -6424,8 +6160,7 @@ function getClass2IconByClass3(c3) {
         });
 
         // ===== LOCAL STORAGE (основные данные пока остаются локально) =====
-        // Supabase подключён поэтапно: туда уже можно синхронизировать theme/language/clan_name.
-        const LS_KEY = 'clanControl_v1';
+                const LS_KEY = 'clanControl_v1';
 
         function saveToStorage() {
             // Показываем индикатор сохранения
@@ -7919,7 +7654,6 @@ function getClass2IconByClass3(c3) {
             loadNotifySettings();
             loadActionLog();
             initUserPreferences();
-            await initSupabaseAuth();
 
             // ===== ВСТРОЕННЫЕ АЛИАСЫ — известные проблемные ники =====
             // Добавляем только если ещё нет пользовательского алиаса

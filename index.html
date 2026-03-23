@@ -303,44 +303,6 @@
         <!-- НАСТРОЙКИ -->
         <section id="page-settings" class="page-section">
             <h1 id="settingsPageTitle" class="text-3xl font-bold mb-8">⚙️ Настройки</h1>
-            <!-- Настройки аккаунта / Supabase -->
-            <div class="card mb-6">
-                <h2 id="authTitle" class="text-lg font-bold mb-2">🔐 Авторизация</h2>
-                <p id="authDescription" class="text-slate-500 text-sm mb-4">Вход по email через magic link Supabase. Сессия сохраняется в браузере.</p>
-                <p id="supabaseHint" class="text-slate-500 text-sm mb-4">Перед запуском вставь свой Supabase URL и ANON KEY в app.js.</p>
-                <div class="settings-stack">
-                    <label class="settings-control">
-                        <span id="authEmailLabel">Email</span>
-                        <input id="authEmailInput" type="email" class="input-dark" placeholder="you@example.com">
-                    </label>
-                    <div class="flex gap-3 flex-wrap">
-                        <button id="authSignInBtn" onclick="signInWithMagicLink()" class="btn-primary">✉️ Войти по email</button>
-                        <button id="authSignOutBtn" onclick="signOutUser()" style="background:#1e2530;color:#94a3b8;border:none;padding:10px 20px;border-radius:10px;cursor:pointer;font-weight:600">↩️ Выйти</button>
-                    </div>
-                    <div id="authStatus" class="settings-status" style="display:none"></div>
-                </div>
-            </div>
-
-            <!-- Личный кабинет -->
-            <div class="card mb-6">
-                <h2 id="profileSettingsTitle" class="text-lg font-bold mb-2">👤 Личный кабинет</h2>
-                <p id="profileSettingsDescription" class="text-slate-500 text-sm mb-4">Здесь отображается email пользователя и сохраняется clan_name.</p>
-                <div class="settings-stack">
-                    <label class="settings-control">
-                        <span id="profileEmailLabel">Email</span>
-                        <input id="profileEmailInput" type="text" class="input-dark" placeholder="—" readonly>
-                    </label>
-                    <label class="settings-control">
-                        <span id="clanNameLabel">Clan name</span>
-                        <input id="clanNameInput" type="text" class="input-dark" placeholder="My Clan">
-                    </label>
-                    <div class="flex gap-3 flex-wrap">
-                        <button id="saveProfileBtn" onclick="saveProfileSettings()" class="btn-primary">💾 Сохранить профиль</button>
-                    </div>
-                    <div id="profileStatus" class="settings-status" style="display:none"></div>
-                </div>
-            </div>
-
             <div class="card mb-6">
                 <h2 id="apiKeysTitle" class="text-lg font-bold mb-2">🔑 API ключи</h2>
                 <p class="text-slate-500 text-sm mb-6">Ключи хранятся только в твоём браузере — не в коде и не на GitHub. Получить ключ: <a href="https://openrouter.ai/keys" target="_blank" style="color:#6366f1">openrouter.ai/keys</a> (бесплатно, модель gemini-2.0-flash-lite)</p>
@@ -640,8 +602,6 @@
         </div>
     </div>
 
-    <!-- Supabase SDK для magic link / профиля -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Логика сайта -->
     <script src="app.js"></script>
 
