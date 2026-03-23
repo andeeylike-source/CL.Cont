@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clan Control v12</title>
+    <!-- Tailwind (утилиты классов) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Стили сайта -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <aside class="sidebar">
+        <h2 class="text-blue-500 font-black text-xl tracking-tighter uppercase">Clan Control</h2>
+        <div style="font-size:9px;color:#475569;margin-top:-8px;margin-bottom:20px;letter-spacing:.05em">v12</div>
+        
+        <nav>
+            <div style="font-size:9px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:.1em;padding:6px 16px 4px;margin-top:4px">Аналитика</div>
+            <div onclick="showPage('dashboard')" id="nav-dashboard" class="nav-item">🏠 Дашборд</div>
+            <div onclick="showPage('stats')" id="nav-stats" class="nav-item">📊 Статистика</div>
+            <div onclick="showPage('calendar')" id="nav-calendar" class="nav-item">📅 Календарь КМ</div>
+            <div onclick="showPage('screenshots')" id="nav-screenshots" class="nav-item">📋 История КМ</div>
+            <div style="font-size:9px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:.1em;padding:6px 16px 4px;margin-top:8px">Управление</div>
+            <div onclick="showPage('roster')" id="nav-roster" class="nav-item">👥 Клан</div>
+            <div onclick="showPage('profile')" id="nav-profile" class="nav-item" style="display:none">👤 Профиль</div>
+            <div onclick="showPage('packs')" id="nav-packs" class="nav-item">⚔️ Рейд Паки</div>
+            <div onclick="showPage('archive')" id="nav-archive" class="nav-item">🗄️ Архив</div>
+        </nav>
+        <div style="margin-top:auto;padding-top:12px;border-top:1px solid #1e2530;display:flex;flex-direction:column;gap:2px">
+            <div style="font-size:9px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:.1em;padding:4px 16px 4px">Система</div>
+            <div onclick="showPage('settings')" id="nav-settings" class="nav-item">⚙️ Настройки</div>
+            <button onclick="exportData()" title="Скачать резервную копию всех данных" style="display:flex;align-items:center;gap:8px;background:none;border:none;color:#475569;border-radius:8px;padding:10px 16px;font-size:13px;cursor:pointer;transition:all .2s;width:100%;text-align:left;font-family:inherit" onmouseover="this.style.background='#1a1f29';this.style.color='#fff'" onmouseout="this.style.background='';this.style.color='#475569'">💾 Бэкап данных</button>
+            <!-- Индикатор автосохранения -->
+            <div id="autoSaveIndicator" style="font-size:10px;color:#475569;padding:4px 16px;display:flex;align-items:center;gap:5px;opacity:0;transition:opacity .4s">
+                <span style="width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block"></span>
+                <span id="autoSaveText">Сохранено</span>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        
+        
+        <!-- ДАШБОРД -->
+        <section id="page-dashboard" class="page-section">
+            <div class="flex justify-between items-center mb-6" style="flex-wrap:wrap;gap:10px">
+                <div>
+                    <h1 class="text-3xl font-bold">Дашборд</h1>
+                    <div id="dashSubtitle" class="text-slate-500 text-sm mt-1"></div>
+                </div>
+                <div id="dashNextEvent" style="background:#6366f122;border:1px solid #6366f144;border-radius:10px;padding:10px 16px;font-size:12px;color:#a5b4fc;font-weight:600;cursor:pointer" onclick="showPage('calendar')"></div>
+            </div>
+            <!-- Навигация -->
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px" id="dashNavCards"></div>
+            <!-- Алерты + Обратить внимание -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+                <div>
+                    <div style="font-size:10px;font-weight:800;text-transform:uppercase;color:#475569;letter-spacing:.08em;margin-bottom:10px;display:flex;align-items:center;gap:6px">🔔 Предупреждения <span id="dashAlertCount" style="background:#ef4444;color:white;border-radius:10px;padding:1px 7px;font-size:9px"></span></div>
+                    <div id="dashAlerts" style="max-height:340px;overflow-y:auto"></div>
+                </div>
+                <div>
+                    <div style="font-size:10px;font-weight:800;text-transform:uppercase;color:#475569;letter-spacing:.08em;margin-bottom:10px">👁 Обратить внимание</div>
+                    <div id="dashAttention" style="max-height:340px;overflow-y:auto"></div>
+                </div>
+            </div>
+            <!-- Рейтинги -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+                <div class="dash-card"><div class="dash-card-title">🏆 Топ-5 ценных</div><div id="dashTopValue"></div></div>
+                <div class="dash-card"><div class="dash-card-title">📈 Растут</div><div id="dashTopGrowing"></div></div>
+                <div class="dash-card"><div class="dash-card-title">📉 Падают</div><div id="dashTopFalling"></div></div>
+                <div class="dash-card"><div class="dash-card-title">💎 Редкие таланты</div><div style="font-size:10px;color:#475569;margin-bottom:6px">Ходят редко, но когда приходят — играют лучше многих</div><div id="dashRareGems"></div></div>
+            </div>
+        </section>
+
+<!-- КАЛЕНДАРЬ -->
+        <section id="page-calendar" class="page-section">
+            <div class="flex justify-between items-center mb-8">
+                <div class="flex items-center gap-4">
+                    <h1 class="text-3xl font-bold">Календарь КМ</h1>
+                    <div id="calendarMonthLabel" class="text-xl text-slate-500 font-medium"></div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="flex gap-2 text-xs text-slate-500 items-center">
+                        <span class="dot dot-past dot-blink"></span> прошло
+                        <span class="dot dot-done ml-2"></span> выполнено
+                        <span class="dot dot-future ml-2"></span> впереди
+                    </div>
+                    <button onclick="changeMonth(-1)" class="p-2 bg-slate-800 rounded-lg">←</button>
+                    <button onclick="changeMonth(1)" class="p-2 bg-slate-800 rounded-lg">→</button>
+                </div>
+            </div>
+            <div id="calendarSummary" style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap"></div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+        </section>
+
+        <!-- РОСТЕР -->
+        <section id="page-roster" class="page-section">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h1 class="text-3xl font-bold">Клан</h1>
+                    <div id="rosterStats" class="text-slate-500 text-sm mt-1"></div>
+                </div>
+                <div class="flex gap-3 items-center flex-wrap justify-end">
+                    <div style="display:flex;align-items:center;gap:6px;background:#12171f;border:1px solid #1e2530;border-radius:10px;padding:6px 12px">
+                        <span style="font-size:11px;color:#64748b">Период КМ%:</span>
+                        <div class="dp-wrap"><button class="dp-btn" id="rosterFromBtn" onclick="openDatePicker('rosterFrom',this)">Начало</button></div>
+                        <span style="color:#475569;font-size:11px">—</span>
+                        <div class="dp-wrap"><button class="dp-btn" id="rosterToBtn" onclick="openDatePicker('rosterTo',this)">Конец</button></div>
+                        <button onclick="clearPeriod('roster')" style="background:none;border:none;color:#475569;cursor:pointer;font-size:10px" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#475569'">✕</button>
+                    </div>
+                    <button onclick="findAllDuplicates()" class="px-4 py-2 border border-purple-900 text-purple-400 rounded-lg text-sm font-medium hover:bg-purple-900/20">🔬 Найти дубли</button>
+                    <button onclick="clearAllNew()" class="px-4 py-2 border border-slate-600 text-slate-400 rounded-lg text-sm font-medium hover:bg-slate-800">Снять NEW</button>
+                    <button onclick="unverifyAll()" class="px-4 py-2 border border-slate-600 text-slate-400 rounded-lg text-sm font-medium hover:bg-slate-800" title="Снять все отметки проверки">Снять ✓</button>
+                    <button onclick="resetAllStats()" class="px-4 py-2 border border-red-900 text-red-500 rounded-lg text-sm font-medium hover:bg-red-900/20">Сброс статы</button>
+                    <button onclick="openPlayerModal()" class="btn-primary">+ Игрок</button>
+                </div>
+            </div>
+            <!-- Импорт из скриншота -->
+            <div id="clanImportBlock" style="margin-bottom:16px">
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                    <div class="relative w-full md:w-96">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </span>
+                        <input type="text" id="rosterSearchInput" class="input-dark pl-10" placeholder="Поиск по нику..." oninput="renderRoster()">
+                    </div>
+                    <label style="display:flex;align-items:center;gap:8px;background:#1e3a5f;color:#60a5fa;border:none;padding:8px 16px;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px;transition:all .2s" onmouseover="this.style.background='#1e4a7f'" onmouseout="this.style.background='#1e3a5f'">
+                        📸 Импорт из скриншота клана
+                        <input type="file" accept="image/*" multiple style="display:none" onchange="handleClanScreenshots(event)">
+                    </label>
+                </div>
+                <!-- Статус и превью -->
+                <div id="clanImportStatus" style="display:none;margin-top:10px;font-size:12px;padding:10px 14px;border-radius:8px"></div>
+                <div id="clanImportResults" style="display:none;margin-top:10px"></div>
+            </div>
+            <div class="card overflow-x-auto">
+                <table>
+                    <thead>
+                        <tr>
+                            <th onclick="handleSort('name')">Ник <span id="sort-name"></span></th>
+                            <th onclick="handleSort('isNew')" style="cursor:pointer">NEW <span id="sort-isNew"></span></th>
+                            <th onclick="handleSort('verified')" style="cursor:pointer;width:30px" title="Проверен — ник и профа верны">✓ <span id="sort-verified"></span></th>
+                            <th onclick="handleSort('profa')">Профа <span id="sort-profa"></span></th>
+                            <th onclick="handleSort('pac')">Пак <span id="sort-pac"></span></th>
+                            <th onclick="handleSort('attendance')">КМ % <span id="sort-attendance"></span></th>
+                            <th onclick="handleSort('valueScore')" style="cursor:pointer">Ценность ⭐ <span id="sort-valueScore"></span></th>
+                            <th class="text-right">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rosterBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- РЕЙД ПАКИ -->
+        <section id="page-packs" class="page-section">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-3xl font-bold">Рейд Паки</h1>
+                <button onclick="createNewPack()" class="btn-primary">+ Создать пак</button>
+            </div>
+            <div id="packsGrid" class="pack-grid"></div>
+        </section>
+
+        <!-- СТАТИСТИКА -->
+        <section id="page-stats" class="page-section">
+            <div class="flex justify-between items-center mb-2" style="flex-wrap:wrap;gap:10px">
+                <h1 class="text-3xl font-bold">Статистика КМ</h1>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                    <select id="statsPackFilter" onchange="renderStats()" style="background:#12171f;border:1px solid #1e2530;border-radius:10px;padding:8px 14px;color:#94a3b8;font-size:12px;cursor:pointer;outline:none">
+                        <option value="">Все паки</option>
+                    </select>
+                    <div style="display:flex;align-items:center;gap:8px;background:#12171f;border:1px solid #1e2530;border-radius:10px;padding:8px 14px">
+                        <span style="font-size:12px;color:#64748b">Период:</span>
+                        <div class="dp-wrap"><button class="dp-btn" id="statsFromBtn" onclick="openDatePicker('statsFrom',this)">Начало</button></div>
+                        <span style="color:#475569;font-size:12px">—</span>
+                        <div class="dp-wrap"><button class="dp-btn" id="statsToBtn" onclick="openDatePicker('statsTo',this)">Конец</button></div>
+                        <button onclick="clearPeriod('stats')" style="background:none;border:none;color:#475569;cursor:pointer;font-size:11px;padding:2px 6px;border-radius:4px" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#475569'">Сбросить</button>
+                    </div>
+                </div>
+            </div>
+            <p id="statsPeriodLabel" class="text-slate-500 text-sm mb-6"></p>
+
+            <!-- ОТЧЁТ: НЕ ПОПАЛИ В CC -->
+            <div style="background:#12171f;border:1px solid #1e2530;border-radius:12px;padding:20px;margin-bottom:24px">
+                <div onclick="var el=document.getElementById('ccAbsenceReport');var btn=document.getElementById('ccToggleBtn');if(el.style.display==='none'){el.style.display='';btn.textContent='▲ Свернуть'}else{el.style.display='none';btn.textContent='▼ Показать'}" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;cursor:pointer">
+                    <div>
+                        <div style="font-size:13px;font-weight:800;color:#e2e8f0">⚠️ Не попали в CC подряд <span id="ccToggleBtn" style="font-size:10px;color:#475569;margin-left:8px">▼ Показать</span></div>
+                        <div style="font-size:11px;color:#475569;margin-top:2px">Игроки из ростера которые отсутствовали в Командном канале N+ КМ подряд</div>
+                    </div>
+                    <div onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:8px">
+                        <span style="font-size:11px;color:#64748b">Порог:</span>
+                        <div style="display:flex;gap:4px">
+                            <button onclick="setCcThreshold(3)" id="ccBtn3" style="background:#1e2530;border:1px solid #2d3748;color:#64748b;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer">3</button>
+                            <button onclick="setCcThreshold(4)" id="ccBtn4" style="background:#1e2530;border:1px solid #2d3748;color:#64748b;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer">4</button>
+                            <button onclick="setCcThreshold(5)" id="ccBtn5" style="background:#6366f1;border:1px solid #6366f1;color:#fff;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer">5</button>
+                            <button onclick="setCcThreshold(6)" id="ccBtn6" style="background:#1e2530;border:1px solid #2d3748;color:#64748b;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer">6</button>
+                            <button onclick="setCcThreshold(7)" id="ccBtn7" style="background:#1e2530;border:1px solid #2d3748;color:#64748b;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer">7</button>
+                        </div>
+                        <span style="font-size:11px;color:#64748b">КМ подряд</span>
+                    </div>
+                </div>
+                <div id="ccAbsenceReport" style="display:none"></div>
+            </div>
+
+            <div id="statsContent"></div>
+        
+            <!-- АНАЛИЗ ПО БОССАМ -->
+            <div id="bossAnalysis" style="margin-top:24px"></div>
+        </section>
+
+        <!-- ПРОФИЛЬ ИГРОКА -->
+        <section id="page-profile" class="page-section">
+            <div id="profileContent"></div>
+        </section>
+
+        <!-- АРХИВ -->
+        <section id="page-archive" class="page-section">
+            <h1 class="text-3xl font-bold mb-8">Архив игроков</h1>
+            <div class="card overflow-x-auto">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ник</th>
+                            <th>Профа</th>
+                            <th class="text-right">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="archiveBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ДЕТАЛИ ПАКА -->
+        <section id="page-pack-detail" class="page-section">
+            <div class="flex items-center gap-4 mb-8">
+                <button onclick="showPage('packs')" class="text-slate-500 hover:text-white flex items-center gap-2 font-medium">← Назад</button>
+                <div class="h-6 w-px bg-slate-800"></div>
+                <h1 id="detailPackNameDisplay" class="text-3xl font-bold uppercase tracking-tight">Группа</h1>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                <div class="lg:col-span-2 space-y-8">
+                    <div class="card">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest">Информация</h3>
+                            <button onclick="confirmDeleteCurrentPack()" class="text-xs text-red-500 hover:underline">Распустить группу</button>
+                        </div>
+                        <input id="detailPackNameInput" type="text" class="input-dark text-xl font-bold" onchange="updateCurrentPackName(this.value)">
+                    </div>
+                    <div class="card">
+                        <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest mb-6">Участники (<span id="detailMemberCount">0</span>)</h3>
+                        <div id="detailMembersList" class="min-h-[100px]"></div>
+                    </div>
+                </div>
+                <div class="space-y-6">
+                    <div class="card sticky top-10">
+                        <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest mb-4">Добавить СОЛО</h3>
+                        <div class="relative">
+                            <input id="detailPlayerSearchInput" type="text" class="input-dark" placeholder="Ник..." onfocus="handleDetailSearch('')" oninput="handleDetailSearch(this.value)">
+                            <div id="detailSearchSuggestions" class="autocomplete-suggestions hidden"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ИСТОРИЯ КМ -->
+        <section id="page-screenshots" class="page-section">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+                <h1 class="text-3xl font-bold">📋 История КМ</h1>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                    <div style="position:relative">
+                        <input type="text" id="kmHistorySearch" placeholder="🔍 Поиск игрока по КМам..."
+                            title="Введи ник чтобы найти все КМ где участвовал этот игрок"
+                            style="background:#12171f;border:1px solid #1e2530;border-radius:10px;padding:8px 14px;color:#e2e8f0;font-size:13px;outline:none;width:240px;transition:border-color .2s"
+                            onfocus="this.style.borderColor='#6366f1'"
+                            onblur="this.style.borderColor='#1e2530'">
+                    </div>
+                    <button onclick="debugSnapshotData()" style="background:#1e2530;border:1px solid #2d3748;color:#f59e0b;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer" title="Диагностика">🔍 Диагностика</button>
+                </div>
+            </div>
+            <div id="kmHistoryContent"></div>
+        </section>
+
+        <!-- НАСТРОЙКИ -->
+        <section id="page-settings" class="page-section">
+            <h1 class="text-3xl font-bold mb-8">⚙️ Настройки</h1>
+            <div class="card mb-6">
+                <h2 class="text-lg font-bold mb-2">🔑 API ключи</h2>
+                <p class="text-slate-500 text-sm mb-6">Ключи хранятся только в твоём браузере — не в коде и не на GitHub. Получить ключ: <a href="https://openrouter.ai/keys" target="_blank" style="color:#6366f1">openrouter.ai/keys</a> (бесплатно, модель gemini-2.0-flash-lite)</p>
+                <div id="apiKeysList" class="space-y-3 mb-4"></div>
+                <button onclick="addApiKeyField()" style="background:none;border:1px dashed #2d3748;color:#64748b;border-radius:10px;padding:10px;width:100%;cursor:pointer;font-size:13px;transition:all .2s" onmouseover="this.style.borderColor='#6366f1';this.style.color='#a5b4fc'" onmouseout="this.style.borderColor='#2d3748';this.style.color='#64748b'">+ Добавить ключ</button>
+                <div class="flex gap-3 mt-4">
+                    <button onclick="saveApiKeys()" class="btn-primary">💾 Сохранить ключи</button>
+                    <button onclick="testApiKey()" style="background:#1e2530;color:#94a3b8;border:none;padding:10px 20px;border-radius:10px;cursor:pointer;font-weight:600">🧪 Проверить</button>
+                    <button onclick="resetExhaustedKeys()" style="background:#1e2530;color:#f59e0b;border:none;padding:10px 20px;border-radius:10px;cursor:pointer;font-weight:600">🔄 Сбросить счётчик</button>
+                </div>
+                <div id="apiKeyStatus" style="display:none;margin-top:12px;font-size:13px;padding:10px;border-radius:8px"></div>
+            </div>
+            <div class="card mb-6">
+                <h2 class="text-lg font-bold mb-2">🔗 Алиасы ников</h2>
+                <p class="text-slate-500 text-sm mb-4">Если AI читает ник неправильно — укажи соответствие. Например: <code style="background:#1e2530;padding:1px 6px;border-radius:4px;font-size:11px">НигативВ → НигатиВ</code></p>
+                <div id="aliasesList" class="space-y-2 mb-4"></div>
+                <button onclick="addAliasRow()" style="background:none;border:1px dashed #2d3748;color:#64748b;border-radius:10px;padding:10px;width:100%;cursor:pointer;font-size:13px;transition:all .2s" onmouseover="this.style.borderColor='#6366f1';this.style.color='#a5b4fc'" onmouseout="this.style.borderColor='#2d3748';this.style.color='#64748b'">+ Добавить алиас</button>
+            </div>
+            <div class="card mb-6">
+                <h2 class="text-lg font-bold mb-2">⚖️ Веса ценности</h2>
+                <p class="text-slate-500 text-sm mb-4">Настрой формулу расчёта "ценности" для каждой роли. Сумма весов должна быть 100%.</p>
+                <div id="valueWeightsConfig"></div>
+            </div>
+            <div class="card mb-6">
+                <h2 class="text-lg font-bold mb-2">🔔 Уведомления</h2>
+                <p class="text-slate-500 text-sm mb-4">Настройки уведомления при завершении анализа скриншотов.</p>
+                <div class="flex flex-col gap-3">
+                    <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                        <input type="checkbox" id="settingNotifyPopup" onchange="saveNotifySettings()" style="width:16px;height:16px;cursor:pointer">
+                        <span style="font-size:14px">Показывать всплывающее уведомление</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                        <input type="checkbox" id="settingNotifySound" onchange="saveNotifySettings()" style="width:16px;height:16px;cursor:pointer">
+                        <span style="font-size:14px">Звуковое уведомление</span>
+                    </label>
+                </div>
+            </div>
+            <div class="card">
+                <h2 class="text-lg font-bold mb-2">💾 Экспорт / Импорт данных</h2>
+                <p class="text-slate-500 text-sm mb-4">Сохраняй данные в файл и загружай обратно. Удобно для резервного копирования и переноса.</p>
+                <div class="flex gap-3 flex-wrap">
+                    <button onclick="exportData()" style="background:#1e3a5f;color:#60a5fa;border:none;padding:10px 20px;border-radius:10px;cursor:pointer;font-weight:600">📤 Экспорт в JSON</button>
+                    <label style="background:#1a3a1a;color:#4ade80;border:none;padding:10px 20px;border-radius:10px;cursor:pointer;font-weight:600">
+                        📥 Импорт из JSON
+                        <input type="file" accept=".json" onchange="importData(event)" style="display:none">
+                    </label>
+                </div>
+                <div id="importStatus" style="display:none;margin-top:12px;font-size:13px;padding:10px;border-radius:8px"></div>
+            </div>
+            <div class="card">
+                <h2 class="text-lg font-bold mb-2">🗑️ Данные</h2>
+                <p class="text-slate-500 text-sm mb-4">Сбросить все данные приложения (ростер, статистика, события). Ключи сохранятся.</p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <button onclick="clearStorage()" style="background:#7f1d1d;color:#fca5a5;border:none;padding:10px 20px;border-radius:10px;cursor:pointer;font-weight:600">🗑️ Сбросить все данные</button>
+                    <button onclick="showOnboarding()" style="background:#1e2530;color:#94a3b8;border:none;padding:10px 20px;border-radius:10px;cursor:pointer;font-weight:600">📖 Показать онбординг</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- МОДАЛКА ИГРОКА -->
+    <div id="playerModal" class="modal-overlay">
+        <div class="card w-[450px]">
+            <h3 id="modalTitle" class="text-xl font-bold mb-6">Игрок</h3>
+            <div class="space-y-4">
+                <input type="hidden" id="editId">
+                <input id="pName" type="text" class="input-dark" placeholder="Ник">
+                <select id="pRank" class="input-dark">
+                    <option value="КЛ">КЛ</option>
+                    <option value="ПЛ">ПЛ</option>
+                    <option value="ИГРОК">Игрок</option>
+                </select>
+                <div id="pProfaDropWrap" style="position:relative">
+                    <div onclick="toggleProfaDropdown()" class="input-dark" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between">
+                        <span style="color:#64748b">+ Добавить профу...</span>
+                        <span style="color:#475569">▾</span>
+                    </div>
+                    <div id="pProfaDrop" style="display:none;position:absolute;top:100%;left:0;right:0;background:#12171f;border:1px solid #6366f1;border-radius:10px;z-index:60;max-height:350px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.7);margin-top:4px">
+                        <div style="padding:8px;border-bottom:1px solid #1e2530">
+                            <input id="pProfaSearch" type="text" placeholder="Поиск: биш, cardinal, епископ, хилер..." style="width:100%;background:#0b0e14;border:1px solid #2d3748;border-radius:8px;padding:8px 12px;color:#e2e8f0;font-size:13px;outline:none" oninput="filterProfaDropdown(this.value)">
+                        </div>
+                        <div id="pProfaList2" style="overflow-y:auto;max-height:290px"></div>
+                    </div>
+                </div>
+                <!-- Выбранные профы -->
+                <div id="pProfaList" style="display:flex;flex-wrap:wrap;gap:6px;min-height:24px"></div>
+                <select id="pPac" class="input-dark"></select>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button onclick="closePlayerModal()" class="px-6 py-2 bg-slate-800 rounded-lg">Отмена</button>
+                    <button onclick="savePlayer()" class="btn-primary">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- КАСТОМНОЕ ОКНО ПОДТВЕРЖДЕНИЯ -->
+    <div id="confirmModal" class="modal-overlay">
+        <div class="card w-[400px]">
+            <h3 id="confirmTitle" class="text-xl font-bold mb-2">Подтверждение</h3>
+            <p id="confirmText" class="text-slate-400 mb-6 text-sm leading-relaxed"></p>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeConfirm()" class="px-6 py-2 bg-slate-800 rounded-lg text-sm font-medium hover:bg-slate-700">Отмена</button>
+                <button id="confirmBtn" class="bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded-lg text-sm font-bold">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- КАСТОМНОЕ ОКНО ВВОДА -->
+    <div id="promptModal" class="modal-overlay">
+        <div class="card w-[400px]">
+            <h3 id="promptTitle" class="text-xl font-bold mb-4">Ввод данных</h3>
+            <input id="promptInput" type="text" class="input-dark mb-6" placeholder="">
+            <div id="promptProfaBlock" style="display:none;margin-bottom:16px">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#475569;margin-bottom:8px">Профа на этом КМ</div>
+                <div id="promptProfaSearch" style="margin-bottom:6px">
+                    <input type="text" id="promptProfaInput" class="input-dark" style="font-size:12px;padding:8px 10px" placeholder="Поиск: биш, cardinal, хилер, се...">
+                </div>
+                <div id="promptProfaList" style="max-height:160px;overflow-y:auto;border:1px solid #1e2530;border-radius:8px;background:#0b0e14"></div>
+                <div id="promptProfaSelected" style="margin-top:6px;font-size:11px;color:#a5b4fc;min-height:18px"></div>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button onclick="closePrompt()" class="px-6 py-2 bg-slate-800 rounded-lg text-sm font-medium hover:bg-slate-700">Отмена</button>
+                <button id="promptBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-lg text-sm font-bold">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА ДОБАВЛЕНИЯ СОБЫТИЯ -->
+    <div id="addEventModal" class="modal-overlay">
+        <div class="card" style="width:420px">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-xl font-bold">➕ Добавить событие</h3>
+                <button onclick="closeAddEventModal()" class="text-slate-500 hover:text-white text-xl leading-none">✕</button>
+            </div>
+            <p class="text-xs font-bold uppercase text-slate-500 mb-3 tracking-widest">Выбери событие</p>
+            <div id="eventPresetGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px"></div>
+            <div id="customNameWrap" style="display:none;margin-bottom:16px">
+                <input id="customEventName" type="text" class="input-dark" placeholder="Введи название...">
+            </div>
+            <p class="text-xs font-bold uppercase text-slate-500 mb-3 tracking-widest">Время (необязательно)</p>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:24px">
+                <input id="eventTimeInput" type="time" class="input-dark" style="width:140px;cursor:pointer">
+                <button onclick="document.getElementById('eventTimeInput').value=''" style="background:#1e2530;border:none;color:#64748b;padding:10px 14px;border-radius:8px;cursor:pointer;font-size:12px">Очистить</button>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeAddEventModal()" class="px-6 py-2 bg-slate-800 rounded-lg text-sm font-medium hover:bg-slate-700">Отмена</button>
+                <button onclick="confirmAddEvent()" class="btn-primary">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МИНИБАР -->
+    <div id="dayMinibar" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1f29;border:1px solid #6366f1;border-radius:12px;padding:10px 20px;z-index:200;align-items:center;gap:14px;box-shadow:0 4px 24px rgba(0,0,0,0.5);cursor:pointer;min-width:280px" onclick="expandDayModal()">
+        <div style="width:10px;height:10px;border-radius:50%;background:#6366f1;animation:blink 1.2s ease-in-out infinite;flex-shrink:0"></div>
+        <div style="flex:1">
+            <div id="minibarText" style="font-size:12px;font-weight:700;color:#a5b4fc">⏳ Анализирую...</div>
+            <div id="minibarSub" style="font-size:10px;color:#475569;margin-top:1px">Нажми чтобы развернуть</div>
+        </div>
+        <div style="font-size:16px;color:#475569">▲</div>
+    </div>
+
+    <!-- МОДАЛКА ДНЯ -->
+    <div id="dayModal" class="modal-overlay">
+        <div class="event-modal-card">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h3 id="dayModalTitle" class="text-xl font-bold"></h3>
+                    <p id="dayModalSubtitle" class="text-slate-500 text-xs mt-1"></p>
+                </div>
+                <button onclick="minimizeDayModal()" style="background:#1e2530;border:none;color:#94a3b8;border-radius:8px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#2d3748';this.style.color='#e2e8f0'" onmouseout="this.style.background='#1e2530';this.style.color='#94a3b8'">Свернуть</button>
+                <button onclick="closeDayModal()" class="text-slate-500 hover:text-white text-xl leading-none">✕</button>
+            </div>
+            <div id="dayEventsList"></div>
+            <div class="section-label" style="margin-top:20px">📸 Скриншоты КМ</div>
+            <label for="dayScreenshotUpload" id="dayDropZone" style="display:block;border:2px dashed #2d3748;border-radius:12px;padding:14px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:8px" onmouseover="this.style.borderColor='#6366f1'" onmouseout="this.style.borderColor='#2d3748'">
+                <div style="font-size:20px;margin-bottom:4px">📁</div>
+                <div style="font-size:11px;color:#64748b">Нажми или перетащи скриншоты (до 25 шт.)</div>
+                <input type="file" id="dayScreenshotUpload" accept="image/*" multiple style="display:none" onchange="handleDayScreenshots(event)">
+            </label>
+            <div id="dayScreenshotPreviews" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+            <div id="dayAnalyzeBlock" style="display:none;margin-bottom:8px">
+                <button onclick="analyzeDayScreenshots()" id="analyzeBtn" style="background:#6366f1;color:white;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;width:100%">🔍 Анализировать скриншоты (AI)</button>
+                <div id="apiKeyIndicator" style="font-size:10px;color:#475569;margin-top:4px;text-align:center">🔑 Используется пул из 6 ключей</div>
+            </div>
+            <div id="dayScreenshotStatus" style="display:none;font-size:12px;padding:8px 12px;border-radius:8px;margin-bottom:8px;position:relative;padding-right:28px"><span id="dayScreenshotStatusText"></span><button onclick="document.getElementById('dayScreenshotStatus').style.display='none'" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);background:none;border:none;color:inherit;cursor:pointer;font-size:14px;opacity:0.6;line-height:1" title="Закрыть">✕</button></div>
+            <div id="dayAnalyzeResults" style="display:none;margin-bottom:8px">
+                <div style="font-size:10px;color:#64748b;text-transform:uppercase;font-weight:700;letter-spacing:.05em;margin-bottom:6px">👥 Распознанные игроки</div>
+                <div id="dayAnalyzedPlayersList" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:4px"></div>
+                <div style="position:sticky;bottom:0;background:#12171f;padding:8px 0 2px;margin-top:8px">
+                    <button onclick="applyDayParsedStats()" style="background:#22c55e;color:white;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;width:100%">✅ Применить в ростер</button>
+                </div>
+            </div>
+            <button onclick="saveDayModal()" class="btn-primary w-full mt-1" style="font-size:14px;padding:12px;font-weight:700">💾 Сохранить</button>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА РЕДАКТИРОВАНИЯ СОБЫТИЯ -->
+    <div id="editEventModal" class="modal-overlay" style="z-index:200">
+        <div class="card w-[380px]">
+            <h3 class="text-lg font-bold mb-5">Редактировать событие</h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs text-slate-500 mb-1 block">Название</label>
+                    <input id="editEventName" type="text" class="input-dark" placeholder="Название...">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-500 mb-1 block">Время</label>
+                    <input id="editEventTime" type="time" class="input-dark">
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button onclick="closeEditEventModal()" class="px-5 py-2 bg-slate-800 rounded-lg text-sm hover:bg-slate-700">Отмена</button>
+                <button onclick="saveEditEvent()" class="btn-primary text-sm px-5 py-2">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DATE PICKER POPUP -->
+    <div id="dpPopup" class="dp-popup">
+        <div id="dpCalView">
+            <div class="dp-header">
+                <button class="dp-nav" onclick="dpNavMonth(-1)">‹</button>
+                <span class="dp-month-label" onclick="dpShowMonths()" id="dpMonthLabel"></span>
+                <button class="dp-nav" onclick="dpNavMonth(1)">›</button>
+            </div>
+            <div class="dp-grid">
+                <div class="dp-dow">Пн</div><div class="dp-dow">Вт</div><div class="dp-dow">Ср</div>
+                <div class="dp-dow">Чт</div><div class="dp-dow">Пт</div><div class="dp-dow">Сб</div><div class="dp-dow">Вс</div>
+                <div id="dpDays"></div>
+            </div>
+            <div class="dp-shortcuts" id="dpShortcuts"></div>
+        </div>
+        <div id="dpMonthView" style="display:none">
+            <div class="dp-header">
+                <button class="dp-nav" onclick="dpNavYear(-1)">‹</button>
+                <span class="dp-month-label" onclick="dpShowYears()" id="dpYearLabel"></span>
+                <button class="dp-nav" onclick="dpNavYear(1)">›</button>
+            </div>
+            <div class="dp-month-grid" id="dpMonths"></div>
+        </div>
+        <div id="dpYearView" style="display:none">
+            <div class="dp-header">
+                <button class="dp-nav" onclick="dpNavDecade(-1)">‹</button>
+                <span class="dp-month-label" id="dpDecadeLabel"></span>
+                <button class="dp-nav" onclick="dpNavDecade(1)">›</button>
+            </div>
+            <div class="dp-year-grid" id="dpYears"></div>
+        </div>
+    </div>
+
+    <!-- ОНБОРДИНГ -->
+    <div id="onboardingOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(6px)">
+        <div style="background:#12171f;border:1px solid #1e2530;border-radius:20px;width:520px;max-width:94vw;padding:36px;text-align:center">
+            <div id="onboardStep1">
+                <div style="font-size:48px;margin-bottom:16px">⚔️</div>
+                <h2 style="font-size:22px;font-weight:900;color:#e2e8f0;margin-bottom:10px">Добро пожаловать в Clan Control</h2>
+                <p style="color:#64748b;font-size:14px;line-height:1.6;margin-bottom:24px">Инструмент офицера для отслеживания КМ-статистики клана. Давай настроим за 3 шага.</p>
+                <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:28px;text-align:left">
+                    <div style="background:#0b0e14;border:1px solid #1e2530;border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px">
+                        <span style="font-size:24px;flex-shrink:0">👥</span>
+                        <div><div style="font-weight:700;color:#e2e8f0;margin-bottom:3px">1. Добавь игроков</div><div style="font-size:12px;color:#64748b">Заполни ростер клана — ники, профы, паки</div></div>
+                    </div>
+                    <div style="background:#0b0e14;border:1px solid #1e2530;border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px">
+                        <span style="font-size:24px;flex-shrink:0">📅</span>
+                        <div><div style="font-weight:700;color:#e2e8f0;margin-bottom:3px">2. Отметь КМ в Календаре</div><div style="font-size:12px;color:#64748b">Открой день КМ и загрузи скриншоты для анализа</div></div>
+                    </div>
+                    <div style="background:#0b0e14;border:1px solid #1e2530;border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px">
+                        <span style="font-size:24px;flex-shrink:0">📊</span>
+                        <div><div style="font-weight:700;color:#e2e8f0;margin-bottom:3px">3. Смотри статистику</div><div style="font-size:12px;color:#64748b">История КМ, рейтинги, профили игроков</div></div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px;justify-content:center">
+                    <button onclick="closeOnboarding()" style="background:#1e2530;border:none;color:#64748b;border-radius:10px;padding:10px 20px;font-size:13px;cursor:pointer;font-weight:600">Пропустить</button>
+                    <button onclick="closeOnboarding();showPage('roster')" style="background:#6366f1;border:none;color:white;border-radius:10px;padding:10px 24px;font-size:13px;cursor:pointer;font-weight:700">Начать с ростера →</button>
+                </div>
+                <div style="margin-top:16px;font-size:11px;color:#2d3748">Также можно добавить API-ключ в Настройках для автоматического анализа скриншотов через AI</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА НАЗНАЧЕНИЯ ПРОФ -->
+    <div id="profaAssignModal" class="modal-overlay" style="z-index:160">
+        <div style="background:#12171f;border:1px solid #1e2530;border-radius:16px;width:560px;max-width:96vw;max-height:85vh;display:flex;flex-direction:column;overflow:hidden">
+            <div style="padding:20px 24px 16px;border-bottom:1px solid #1e2530;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+                <div>
+                    <div style="font-size:16px;font-weight:700;color:#e2e8f0">🎭 Назначить профы</div>
+                    <div id="profaAssignSubtitle" style="font-size:12px;color:#64748b;margin-top:2px"></div>
+                </div>
+                <button onclick="closeProfaAssign()" style="background:#1e2530;border:none;color:#94a3b8;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px">✕</button>
+            </div>
+            <div id="profaAssignList" style="overflow-y:auto;padding:16px 24px;display:flex;flex-direction:column;gap:12px;flex:1"></div>
+            <div style="padding:16px 24px;border-top:1px solid #1e2530;display:flex;justify-content:flex-end;gap:10px;flex-shrink:0">
+                <button onclick="closeProfaAssign()" style="background:#1e2530;border:none;color:#94a3b8;border-radius:8px;padding:8px 18px;font-size:13px;cursor:pointer;font-weight:600">Пропустить</button>
+                <button onclick="saveProfaAssign()" style="background:#6366f1;border:none;color:white;border-radius:8px;padding:8px 18px;font-size:13px;cursor:pointer;font-weight:700">💾 Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Логика сайта -->
+    <script src="app.js"></script>
+
+</body>
+</html>
