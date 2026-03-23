@@ -25,6 +25,184 @@
         let currentActivePackId = null;
         let currentSort = { field: 'name', direction: 'asc' };
         let currentDate = new Date();
+        let currentLanguage = 'ru';
+        let currentTheme = 'dark';
+
+        const LANGUAGE_STORAGE_KEY = 'cc_language';
+        const THEME_STORAGE_KEY = 'cc_theme';
+
+        const translations = {
+            ru: {
+                locale: 'ru-RU',
+                dayNames: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+                navSectionAnalytics: 'Аналитика',
+                navDashboard: '🏠 Дашборд',
+                navStats: '📊 Статистика',
+                navCalendar: '📅 Календарь КМ',
+                navScreenshots: '📋 История КМ',
+                navSectionManagement: 'Управление',
+                navRoster: '👥 Клан',
+                navPacks: '⚔️ Рейд Паки',
+                navArchive: '🗄️ Архив',
+                navSectionSystem: 'Система',
+                navSettings: '⚙️ Настройки',
+                backupDataBtn: '💾 Бэкап данных',
+                autoSaveText: 'Сохранено',
+                dashboardTitle: 'Дашборд',
+                calendarTitle: 'Календарь КМ',
+                rosterTitle: 'Клан',
+                packsTitle: 'Рейд Паки',
+                createPackBtn: '+ Создать пак',
+                statsTitle: 'Статистика КМ',
+                archiveTitle: 'Архив игроков',
+                settingsPageTitle: '⚙️ Настройки',
+                preferencesTitle: '👤 Пользовательские настройки',
+                preferencesDescription: 'Переключай язык интерфейса и тему оформления. Выбор сохраняется автоматически.',
+                languageLabel: 'Язык',
+                themeLabel: 'Тема',
+                apiKeysTitle: '🔑 API ключи',
+                aliasesTitle: '🔗 Алиасы ников',
+                valueWeightsTitle: '⚖️ Веса ценности',
+                notificationsTitle: '🔔 Уведомления',
+                exportImportTitle: '💾 Экспорт / Импорт данных',
+                dataTitle: '🗑️ Данные',
+                themeDark: 'Dark',
+                themeLight: 'Light',
+                dayPast: '⚠️ Прошедший день',
+                dayToday: '✅ Сегодня',
+                dayFuture: '🔵 Предстоящий день'
+            },
+            en: {
+                locale: 'en-US',
+                dayNames: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                navSectionAnalytics: 'Analytics',
+                navDashboard: '🏠 Dashboard',
+                navStats: '📊 Statistics',
+                navCalendar: '📅 Clan Calendar',
+                navScreenshots: '📋 Clan History',
+                navSectionManagement: 'Management',
+                navRoster: '👥 Clan',
+                navPacks: '⚔️ Raid Packs',
+                navArchive: '🗄️ Archive',
+                navSectionSystem: 'System',
+                navSettings: '⚙️ Settings',
+                backupDataBtn: '💾 Backup data',
+                autoSaveText: 'Saved',
+                dashboardTitle: 'Dashboard',
+                calendarTitle: 'Clan Calendar',
+                rosterTitle: 'Clan',
+                packsTitle: 'Raid Packs',
+                createPackBtn: '+ Create pack',
+                statsTitle: 'Clan Statistics',
+                archiveTitle: 'Players Archive',
+                settingsPageTitle: '⚙️ Settings',
+                preferencesTitle: '👤 User settings',
+                preferencesDescription: 'Switch interface language and color theme. Your choice is saved automatically.',
+                languageLabel: 'Language',
+                themeLabel: 'Theme',
+                apiKeysTitle: '🔑 API keys',
+                aliasesTitle: '🔗 Nick aliases',
+                valueWeightsTitle: '⚖️ Value weights',
+                notificationsTitle: '🔔 Notifications',
+                exportImportTitle: '💾 Export / Import data',
+                dataTitle: '🗑️ Data',
+                themeDark: 'Dark',
+                themeLight: 'Light',
+                dayPast: '⚠️ Past day',
+                dayToday: '✅ Today',
+                dayFuture: '🔵 Upcoming day'
+            }
+        };
+
+        function t(key) {
+            return translations[currentLanguage]?.[key] || translations.ru[key] || key;
+        }
+
+        function applyTheme(theme) {
+            currentTheme = theme === 'light' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            try { localStorage.setItem(THEME_STORAGE_KEY, currentTheme); } catch (e) {}
+            const themeSelect = document.getElementById('themeSelect');
+            if (themeSelect) themeSelect.value = currentTheme;
+        }
+
+        function applyLanguage(language) {
+            currentLanguage = translations[language] ? language : 'ru';
+            document.documentElement.lang = currentLanguage;
+            try { localStorage.setItem(LANGUAGE_STORAGE_KEY, currentLanguage); } catch (e) {}
+            const languageSelect = document.getElementById('languageSelect');
+            if (languageSelect) languageSelect.value = currentLanguage;
+            const themeSelect = document.getElementById('themeSelect');
+            if (themeSelect) {
+                const darkOption = themeSelect.querySelector('option[value="dark"]');
+                const lightOption = themeSelect.querySelector('option[value="light"]');
+                if (darkOption) darkOption.textContent = t('themeDark');
+                if (lightOption) lightOption.textContent = t('themeLight');
+            }
+            const map = {
+                navSectionAnalytics: 'navSectionAnalytics',
+                'nav-dashboard': 'navDashboard',
+                'nav-stats': 'navStats',
+                'nav-calendar': 'navCalendar',
+                'nav-screenshots': 'navScreenshots',
+                navSectionManagement: 'navSectionManagement',
+                'nav-roster': 'navRoster',
+                'nav-packs': 'navPacks',
+                'nav-archive': 'navArchive',
+                navSectionSystem: 'navSectionSystem',
+                'nav-settings': 'navSettings',
+                backupDataBtn: 'backupDataBtn',
+                autoSaveText: 'autoSaveText',
+                dashboardTitle: 'dashboardTitle',
+                calendarTitle: 'calendarTitle',
+                rosterTitle: 'rosterTitle',
+                packsTitle: 'packsTitle',
+                createPackBtn: 'createPackBtn',
+                statsTitle: 'statsTitle',
+                archiveTitle: 'archiveTitle',
+                settingsPageTitle: 'settingsPageTitle',
+                preferencesTitle: 'preferencesTitle',
+                preferencesDescription: 'preferencesDescription',
+                languageLabel: 'languageLabel',
+                themeLabel: 'themeLabel',
+                apiKeysTitle: 'apiKeysTitle',
+                aliasesTitle: 'aliasesTitle',
+                valueWeightsTitle: 'valueWeightsTitle',
+                notificationsTitle: 'notificationsTitle',
+                exportImportTitle: 'exportImportTitle',
+                dataTitle: 'dataTitle'
+            };
+            Object.entries(map).forEach(([id, key]) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = t(key);
+            });
+
+            const backupBtn = document.getElementById('backupDataBtn');
+            if (backupBtn) {
+                backupBtn.title = currentLanguage === 'ru'
+                    ? 'Скачать резервную копию всех данных'
+                    : 'Download a backup copy of all data';
+            }
+
+            if (document.getElementById('calendarGrid')) renderCalendar();
+            if (activeDayDate && document.getElementById('dayModal')?.style.display === 'flex') {
+                openDayModal(activeDayDate);
+            }
+        }
+
+        function initUserPreferences() {
+            const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'dark';
+            const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY) || 'ru';
+            applyTheme(savedTheme);
+            applyLanguage(savedLanguage);
+
+            document.getElementById('themeSelect')?.addEventListener('change', (event) => {
+                applyTheme(event.target.value);
+            });
+            document.getElementById('languageSelect')?.addEventListener('change', (event) => {
+                applyLanguage(event.target.value);
+            });
+        }
         
         // Текущая дата открытого модального окна дня
         let activeDayDate = null;
@@ -157,14 +335,14 @@
             if (!grid || !label) return;
             grid.innerHTML = '';
 
-            const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+            const daysOfWeek = translations[currentLanguage].dayNames;
             daysOfWeek.forEach(day => {
                 grid.innerHTML += `<div class="calendar-header-cell">${day}</div>`;
             });
 
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
-            label.innerText = currentDate.toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
+            label.innerText = currentDate.toLocaleString(translations[currentLanguage].locale, { month: 'long', year: 'numeric' });
 
             const firstDay = new Date(year, month, 1);
             let startOffset = firstDay.getDay() - 1;
@@ -241,14 +419,14 @@
             document.getElementById('dupesOverlay')?.remove();
             activeDayDate = dateStr;
             const dateObj = new Date(dateStr + 'T12:00:00');
-            const formatted = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' });
+            const formatted = dateObj.toLocaleDateString(translations[currentLanguage].locale, { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' });
             document.getElementById('dayModalTitle').innerText = formatted;
             
             const today = todayStr();
             let subtitle = '';
-            if (dateStr < today) subtitle = '⚠️ Прошедший день';
-            else if (dateStr === today) subtitle = '✅ Сегодня';
-            else subtitle = '🔵 Предстоящий день';
+            if (dateStr < today) subtitle = t('dayPast');
+            else if (dateStr === today) subtitle = t('dayToday');
+            else subtitle = t('dayFuture');
             document.getElementById('dayModalSubtitle').innerText = subtitle;
 
             // Инициализируем превью скриншотов для этого дня
@@ -7475,6 +7653,7 @@ function getClass2IconByClass3(c3) {
             loadFromStorage();
             loadNotifySettings();
             loadActionLog();
+            initUserPreferences();
 
             // ===== ВСТРОЕННЫЕ АЛИАСЫ — известные проблемные ники =====
             // Добавляем только если ещё нет пользовательского алиаса
