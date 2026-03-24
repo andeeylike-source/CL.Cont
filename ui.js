@@ -4,43 +4,52 @@ const UI_TEXTS = {
     ru: {
         loginSubtitle:  'Инструмент офицера клана для отслеживания КМ-статистики',
         loginEmailLabel:'Введи email',
-        loginClanLabel: 'Название клана',
-        loginBtnText1:  'Продолжить →',
-        loginBtnText2:  'Войти в Clan Control →',
-        loginHintText:  'MVP режим — введи любой email',
-        loginHint2:     'Можно изменить позже в профиле',
+        loginClanLabel: 'Клан (только при первом входе)',
+        loginBtnText1:  'Отправить ссылку на вход →',
+        loginBtnText2:  'Я перешёл по ссылке →',
+        loginHintText:  'На почту придёт ссылка для входа',
+        loginHint2:     'Если клан уже был сохранён — поле можно пропустить',
     },
     en: {
         loginSubtitle:  'Clan officer toolkit for tracking war statistics',
         loginEmailLabel:'Enter your email',
-        loginClanLabel: 'Clan name or tag',
-        loginBtnText1:  'Continue →',
-        loginBtnText2:  'Enter Clan Control →',
-        loginHintText:  'MVP mode — enter any email',
-        loginHint2:     'You can change this in your profile later',
+        loginClanLabel: 'Clan (first login only)',
+        loginBtnText1:  'Send magic link →',
+        loginBtnText2:  'I clicked the link →',
+        loginHintText:  'We will send a secure sign-in link to your email',
+        loginHint2:     'Skip clan input if it was already saved before',
     }
 };
 
 let currentTheme = localStorage.getItem('cc_theme') || 'dark';
 let currentLang  = localStorage.getItem('cc_lang')  || 'ru';
 let loginEmail   = '';
+let pendingMagicEmail = '';
 
 /* ─── THEME ─────────────────────────────────── */
 function setTheme(theme) {
     currentTheme = theme;
     localStorage.setItem('cc_theme', theme);
     document.body.classList.toggle('light', theme === 'light');
-    _syncPair('themeDark',      'themeLight',      theme === 'dark');
-    _syncPair('loginThemeDark', 'loginThemeLight',  theme === 'dark');
+    _syncSwitch('themeSwitch', theme === 'dark');
+    _syncSwitch('loginThemeSwitch', theme === 'dark');
+}
+
+function toggleTheme() {
+    setTheme(currentTheme === 'dark' ? 'light' : 'dark');
 }
 
 /* ─── LANGUAGE ───────────────────────────────── */
 function setLang(lang) {
     currentLang = lang;
     localStorage.setItem('cc_lang', lang);
-    _syncPair('langRu',      'langEn',      lang === 'ru');
-    _syncPair('loginLangRu', 'loginLangEn', lang === 'ru');
+    _syncSwitch('langSwitch', lang === 'ru');
+    _syncSwitch('loginLangSwitch', lang === 'ru');
     _applyTexts(lang);
+}
+
+function toggleLang() {
+    setLang(currentLang === 'ru' ? 'en' : 'ru');
 }
 
 function _applyTexts(lang) {
@@ -55,35 +64,46 @@ function _applyTexts(lang) {
 }
 
 /* ─── LOGIN STEPS ────────────────────────────── */
-function goStep2() {
+function requestMagicLink() {
     const input = document.getElementById('loginEmailInput');
     const email = (input ? input.value : '').trim();
-    const t = UI_TEXTS[currentLang] || UI_TEXTS.ru;
 
     if (!email || !email.includes('@')) {
         _shakeInput(input);
         return;
     }
-    loginEmail = email;
+    pendingMagicEmail = email;
+    const emailStep = document.getElementById('loginStepEmail') || document.getElementById('loginStep1');
+    const confirmStep = document.getElementById('loginStepConfirm') || document.getElementById('loginStep2');
+    if (emailStep) emailStep.classList.remove('active');
+    if (confirmStep) confirmStep.classList.add('active');
+    const dot2 = document.getElementById('loginDot2');
+    if (dot2) dot2.classList.add('done');
 
-    // Переход к шагу 2
-    document.getElementById('loginStep1').classList.remove('active');
-    document.getElementById('loginStep2').classList.add('active');
-    document.getElementById('loginDot2').classList.add('done');
-
+    const savedClan = localStorage.getItem('cc_clan') || sessionStorage.getItem('cc_clan') || '';
     const clanInput = document.getElementById('loginClanInput');
-    if (clanInput) clanInput.focus();
+    const clanLabel = document.getElementById('loginClanLabel');
+    if (clanInput) {
+        clanInput.value = savedClan;
+        clanInput.style.display = savedClan ? 'none' : '';
+    }
+    if (clanLabel) clanLabel.style.display = savedClan ? 'none' : '';
 }
 
-function goStep1() {
-    document.getElementById('loginStep2').classList.remove('active');
-    document.getElementById('loginStep1').classList.add('active');
-    document.getElementById('loginDot2').classList.remove('done');
-}
+function confirmMagicLink() {
+    loginEmail = pendingMagicEmail;
+    if (!loginEmail) return;
 
-function doLogin() {
     const clanInput  = document.getElementById('loginClanInput');
-    const clanName   = clanInput ? clanInput.value.trim() : '';
+    const savedClan  = localStorage.getItem('cc_clan') || sessionStorage.getItem('cc_clan') || '';
+    const clanName   = (clanInput && clanInput.style.display !== 'none')
+        ? clanInput.value.trim()
+        : savedClan;
+
+    if (!clanName) {
+        _shakeInput(clanInput);
+        return;
+    }
 
     // Сохраняем сессию
     sessionStorage.setItem('cc_user',  loginEmail);
@@ -109,8 +129,13 @@ function doLogout() {
     loginEmail = '';
 
     // Возврат к шагу 1
-    goStep1();
-    document.getElementById('loginDot2').classList.remove('done');
+    const emailStep = document.getElementById('loginStepEmail') || document.getElementById('loginStep1');
+    const confirmStep = document.getElementById('loginStepConfirm') || document.getElementById('loginStep2');
+    if (confirmStep) confirmStep.classList.remove('active');
+    if (emailStep) emailStep.classList.add('active');
+    const dot2 = document.getElementById('loginDot2');
+    if (dot2) dot2.classList.remove('done');
+    pendingMagicEmail = '';
 
     // Скрываем приложение, показываем логин
     document.getElementById('topbar').classList.add('hidden');
@@ -145,11 +170,11 @@ function _showApp(email, clan) {
     }
 }
 
-function _syncPair(activeId, inactiveId, firstIsActive) {
-    const a = document.getElementById(activeId);
-    const b = document.getElementById(inactiveId);
-    if (a) a.classList.toggle('active', firstIsActive);
-    if (b) b.classList.toggle('active', !firstIsActive);
+function _syncSwitch(id, leftIsActive) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('is-left', leftIsActive);
+    el.classList.toggle('is-right', !leftIsActive);
 }
 
 function _setText(id, text) {
@@ -163,6 +188,10 @@ function _shakeInput(input) {
     setTimeout(() => input.classList.remove('error'), 1500);
     input.focus();
 }
+
+// Backward compatibility for older cached HTML handlers.
+window.goStep2 = requestMagicLink;
+window.doLogin = confirmMagicLink;
 
 /* ─── INIT ───────────────────────────────────── */
 (function init() {
