@@ -1,60 +1,45 @@
-/* =============================================
-   ui.js — Login, Theme, Language
-   ============================================= */
+/* ui.js — Login flow, Theme, Language */
 
-// ─── ТЕКСТЫ ДЛЯ ЛОКАЛИЗАЦИИ ──────────────────
 const UI_TEXTS = {
     ru: {
         loginSubtitle:  'Инструмент офицера клана для отслеживания КМ-статистики',
-        loginEmailLabel:'Email',
-        loginBtnText:   'Войти →',
-        loginHintText:  'Для MVP — введи любой email и нажми войти',
-        loginErrorEmpty:'Введи email',
-        loginErrorInvalid: 'Введи корректный email',
-        themeLabel:     'Тема',
-        langLabel:      'Язык',
-        logoutBtn:      '🚪 Выйти',
-        backupBtn:      '💾 Бэкап данных',
+        loginEmailLabel:'Введи email',
+        loginClanLabel: 'Название клана',
+        loginBtnText1:  'Продолжить →',
+        loginBtnText2:  'Войти в Clan Control →',
+        loginHintText:  'MVP режим — введи любой email',
+        loginHint2:     'Можно изменить позже в профиле',
     },
     en: {
         loginSubtitle:  'Clan officer toolkit for tracking war statistics',
-        loginEmailLabel:'Email',
-        loginBtnText:   'Sign In →',
-        loginHintText:  'MVP mode — enter any email and press sign in',
-        loginErrorEmpty:'Enter your email',
-        loginErrorInvalid: 'Enter a valid email',
-        themeLabel:     'Theme',
-        langLabel:      'Lang',
-        logoutBtn:      '🚪 Sign Out',
-        backupBtn:      '💾 Backup',
+        loginEmailLabel:'Enter your email',
+        loginClanLabel: 'Clan name or tag',
+        loginBtnText1:  'Continue →',
+        loginBtnText2:  'Enter Clan Control →',
+        loginHintText:  'MVP mode — enter any email',
+        loginHint2:     'You can change this in your profile later',
     }
 };
 
-// ─── СОСТОЯНИЕ ────────────────────────────────
 let currentTheme = localStorage.getItem('cc_theme') || 'dark';
 let currentLang  = localStorage.getItem('cc_lang')  || 'ru';
+let loginEmail   = '';
 
-// ─── ТЕМА ────────────────────────────────────
+/* ─── THEME ─────────────────────────────────── */
 function setTheme(theme) {
     currentTheme = theme;
     localStorage.setItem('cc_theme', theme);
     document.body.classList.toggle('light', theme === 'light');
-
-    // Синхронизируем все кнопки темы (в логине и сайдбаре)
-    _syncBtn('themeDark',   'themeLight',   theme === 'dark');
-    _syncBtn('loginThemeDark', 'loginThemeLight', theme === 'dark');
+    _syncPair('themeDark',      'themeLight',      theme === 'dark');
+    _syncPair('loginThemeDark', 'loginThemeLight',  theme === 'dark');
 }
 
-// ─── ЯЗЫК ────────────────────────────────────
+/* ─── LANGUAGE ───────────────────────────────── */
 function setLang(lang) {
     currentLang = lang;
     localStorage.setItem('cc_lang', lang);
-
-    // Синхронизируем все кнопки языка
-    _syncBtn('langRu',      'langEn',      lang === 'ru');
-    _syncBtn('loginLangRu', 'loginLangEn', lang === 'ru');
-
-    // Применяем тексты
+    _syncPair('langRu',      'langEn',      lang === 'ru');
+    _syncPair('loginLangRu', 'loginLangEn', lang === 'ru');
     _applyTexts(lang);
 }
 
@@ -62,8 +47,109 @@ function _applyTexts(lang) {
     const t = UI_TEXTS[lang] || UI_TEXTS.ru;
     _setText('loginSubtitle',   t.loginSubtitle);
     _setText('loginEmailLabel', t.loginEmailLabel);
-    _setText('loginBtnText',    t.loginBtnText);
+    _setText('loginClanLabel',  t.loginClanLabel);
+    _setText('loginBtnText1',   t.loginBtnText1);
+    _setText('loginBtnText2',   t.loginBtnText2);
     _setText('loginHintText',   t.loginHintText);
+    _setText('loginHint2',      t.loginHint2);
+}
+
+/* ─── LOGIN STEPS ────────────────────────────── */
+function goStep2() {
+    const input = document.getElementById('loginEmailInput');
+    const email = (input ? input.value : '').trim();
+    const t = UI_TEXTS[currentLang] || UI_TEXTS.ru;
+
+    if (!email || !email.includes('@')) {
+        _shakeInput(input);
+        return;
+    }
+    loginEmail = email;
+
+    // Переход к шагу 2
+    document.getElementById('loginStep1').classList.remove('active');
+    document.getElementById('loginStep2').classList.add('active');
+    document.getElementById('loginDot2').classList.add('done');
+
+    const clanInput = document.getElementById('loginClanInput');
+    if (clanInput) clanInput.focus();
+}
+
+function goStep1() {
+    document.getElementById('loginStep2').classList.remove('active');
+    document.getElementById('loginStep1').classList.add('active');
+    document.getElementById('loginDot2').classList.remove('done');
+}
+
+function doLogin() {
+    const clanInput  = document.getElementById('loginClanInput');
+    const clanName   = clanInput ? clanInput.value.trim() : '';
+
+    // Сохраняем сессию
+    sessionStorage.setItem('cc_user',  loginEmail);
+    sessionStorage.setItem('cc_clan',  clanName);
+    localStorage.setItem('cc_user',    loginEmail);
+    localStorage.setItem('cc_clan',    clanName);
+
+    _showApp(loginEmail, clanName);
+}
+
+/* ─── LOGOUT ─────────────────────────────────── */
+function doLogout() {
+    sessionStorage.removeItem('cc_user');
+    sessionStorage.removeItem('cc_clan');
+    localStorage.removeItem('cc_user');
+    localStorage.removeItem('cc_clan');
+
+    // Сброс формы
+    const e = document.getElementById('loginEmailInput');
+    const c = document.getElementById('loginClanInput');
+    if (e) e.value = '';
+    if (c) c.value = '';
+    loginEmail = '';
+
+    // Возврат к шагу 1
+    goStep1();
+    document.getElementById('loginDot2').classList.remove('done');
+
+    // Скрываем приложение, показываем логин
+    document.getElementById('topbar').classList.add('hidden');
+    document.getElementById('appLayout').classList.add('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+}
+
+/* ─── SHOW APP ───────────────────────────────── */
+function _showApp(email, clan) {
+    // Скрываем логин
+    document.getElementById('loginScreen').classList.add('hidden');
+
+    // Показываем топбар и лейаут
+    document.getElementById('topbar').classList.remove('hidden');
+    document.getElementById('appLayout').classList.remove('hidden');
+
+    // Обновляем аватар и email в топбаре
+    const avatar = document.getElementById('topbarAvatar');
+    const emailEl = document.getElementById('topbarEmail');
+    if (avatar) avatar.textContent = (email[0] || '?').toUpperCase();
+    if (emailEl) emailEl.textContent = email;
+
+    // Clan badge
+    const clanBadge = document.getElementById('topbarClan');
+    if (clanBadge) {
+        if (clan) {
+            clanBadge.textContent = clan;
+            clanBadge.style.display = '';
+        } else {
+            clanBadge.style.display = 'none';
+        }
+    }
+}
+
+function _syncPair(activeId, inactiveId, firstIsActive) {
+    const a = document.getElementById(activeId);
+    const b = document.getElementById(inactiveId);
+    if (a) a.classList.toggle('active', firstIsActive);
+    if (b) b.classList.toggle('active', !firstIsActive);
 }
 
 function _setText(id, text) {
@@ -71,87 +157,23 @@ function _setText(id, text) {
     if (el) el.textContent = text;
 }
 
-function _syncBtn(activeId, inactiveId, isFirst) {
-    const a = document.getElementById(activeId);
-    const b = document.getElementById(inactiveId);
-    if (a) { a.classList.toggle('active', isFirst);  }
-    if (b) { b.classList.toggle('active', !isFirst); }
-}
-
-// ─── ЛОГИН ────────────────────────────────────
-function doLogin() {
-    const input = document.getElementById('loginEmailInput');
-    const email = (input ? input.value : '').trim();
-    const t = UI_TEXTS[currentLang] || UI_TEXTS.ru;
-
-    if (!email) {
-        _shakeInput(input, t.loginErrorEmpty);
-        return;
-    }
-    if (!email.includes('@') || !email.includes('.')) {
-        _shakeInput(input, t.loginErrorInvalid);
-        return;
-    }
-
-    // Сохраняем сессию
-    sessionStorage.setItem('cc_user', email);
-    localStorage.setItem('cc_user', email);
-
-    // Показываем основной интерфейс
-    _showApp(email);
-}
-
-function _showApp(email) {
-    const loginScreen = document.getElementById('loginScreen');
-    if (loginScreen) loginScreen.classList.add('hidden');
-
-    // Обновляем user pill в сайдбаре
-    const avatarEl = document.getElementById('sidebarUserAvatar');
-    const emailEl  = document.getElementById('sidebarUserEmail');
-    if (avatarEl) avatarEl.textContent = (email[0] || '?').toUpperCase();
-    if (emailEl)  emailEl.textContent  = email;
-}
-
-function doLogout() {
-    sessionStorage.removeItem('cc_user');
-    localStorage.removeItem('cc_user');
-
-    // Сбрасываем поле
-    const input = document.getElementById('loginEmailInput');
-    if (input) input.value = '';
-
-    // Показываем логин
-    const loginScreen = document.getElementById('loginScreen');
-    if (loginScreen) loginScreen.classList.remove('hidden');
-}
-
-function _shakeInput(input, message) {
+function _shakeInput(input) {
     if (!input) return;
-    input.style.borderColor = '#ef4444';
-    input.style.boxShadow   = '0 0 0 3px rgba(239,68,68,0.15)';
-    input.placeholder = message;
-    input.value = '';
-
-    setTimeout(() => {
-        input.style.borderColor = '';
-        input.style.boxShadow   = '';
-        const t = UI_TEXTS[currentLang] || UI_TEXTS.ru;
-        input.placeholder = 'your@email.com';
-    }, 1800);
+    input.classList.add('error');
+    setTimeout(() => input.classList.remove('error'), 1500);
+    input.focus();
 }
 
-// ─── ИНИЦИАЛИЗАЦИЯ ────────────────────────────
+/* ─── INIT ───────────────────────────────────── */
 (function init() {
-    // Применяем тему
     setTheme(currentTheme);
-
-    // Применяем язык
     setLang(currentLang);
 
-    // Проверяем — уже залогинен?
     const savedUser = sessionStorage.getItem('cc_user') || localStorage.getItem('cc_user');
+    const savedClan = sessionStorage.getItem('cc_clan') || localStorage.getItem('cc_clan') || '';
+
     if (savedUser) {
-        _showApp(savedUser);
+        loginEmail = savedUser;
+        _showApp(savedUser, savedClan);
     }
-    // Иначе loginScreen остаётся видимым (по умолчанию)
 })();
