@@ -73,7 +73,20 @@ function requestMagicLink() {
         return;
     }
     pendingMagicEmail = email;
-    _setLoginStep(true);
+    const loginStepEmail = document.getElementById('loginStepEmail');
+    const loginStepConfirm = document.getElementById('loginStepConfirm');
+    if (loginStepEmail && loginStepConfirm) {
+        loginStepEmail.classList.remove('active');
+        loginStepConfirm.classList.add('active');
+    } else {
+        const emailStep = document.getElementById('loginStep1');
+        const confirmStep = document.getElementById('loginStep2');
+        if (emailStep) emailStep.classList.remove('active');
+        if (confirmStep) confirmStep.classList.add('active');
+    }
+
+    const dot2 = document.getElementById('loginDot2');
+    if (dot2) dot2.classList.add('done');
 
     const savedClan = localStorage.getItem('cc_clan') || sessionStorage.getItem('cc_clan') || '';
     const clanInput = document.getElementById('loginClanInput');
@@ -124,7 +137,20 @@ function doLogout() {
     loginEmail = '';
 
     // Возврат к шагу 1
-    _setLoginStep(false);
+    const loginStepEmail = document.getElementById('loginStepEmail');
+    const loginStepConfirm = document.getElementById('loginStepConfirm');
+    if (loginStepEmail && loginStepConfirm) {
+        loginStepConfirm.classList.remove('active');
+        loginStepEmail.classList.add('active');
+    } else {
+        const emailStep = document.getElementById('loginStep1');
+        const confirmStep = document.getElementById('loginStep2');
+        if (confirmStep) confirmStep.classList.remove('active');
+        if (emailStep) emailStep.classList.add('active');
+    }
+
+    const dot2 = document.getElementById('loginDot2');
+    if (dot2) dot2.classList.remove('done');
     pendingMagicEmail = '';
 
     // Скрываем приложение, показываем логин
@@ -177,16 +203,6 @@ function _shakeInput(input) {
     input.classList.add('error');
     setTimeout(() => input.classList.remove('error'), 1500);
     input.focus();
-}
-
-function _setLoginStep(isConfirmStep) {
-    const emailStep = document.getElementById('loginStepEmail') || document.getElementById('loginStep1');
-    const confirmStep = document.getElementById('loginStepConfirm') || document.getElementById('loginStep2');
-    if (emailStep) emailStep.classList.toggle('active', !isConfirmStep);
-    if (confirmStep) confirmStep.classList.toggle('active', isConfirmStep);
-
-    const dot2 = document.getElementById('loginDot2');
-    if (dot2) dot2.classList.toggle('done', isConfirmStep);
 }
 
 // Backward compatibility for older cached HTML handlers.
