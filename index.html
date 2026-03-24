@@ -20,14 +20,20 @@
     <div class="login-wrap">
         <!-- Toggles -->
         <div class="login-top-bar">
-            <div class="seg-toggle">
-                <button class="seg-toggle-btn active" id="loginThemeDark" onclick="setTheme('dark')">🌙</button>
-                <button class="seg-toggle-btn" id="loginThemeLight" onclick="setTheme('light')">☀️</button>
-            </div>
-            <div class="seg-toggle">
-                <button class="seg-toggle-btn active" id="loginLangRu" onclick="setLang('ru')">RU</button>
-                <button class="seg-toggle-btn" id="loginLangEn" onclick="setLang('en')">EN</button>
-            </div>
+            <button class="seg-switch" id="loginThemeSwitch" onclick="toggleTheme()" aria-label="Переключить тему">
+                <span class="seg-switch-track">
+                    <span class="seg-switch-opt seg-switch-left">🌙</span>
+                    <span class="seg-switch-opt seg-switch-right">☀️</span>
+                    <span class="seg-switch-thumb"></span>
+                </span>
+            </button>
+            <button class="seg-switch" id="loginLangSwitch" onclick="toggleLang()" aria-label="Переключить язык">
+                <span class="seg-switch-track">
+                    <span class="seg-switch-opt seg-switch-left">RU</span>
+                    <span class="seg-switch-opt seg-switch-right">EN</span>
+                    <span class="seg-switch-thumb"></span>
+                </span>
+            </button>
         </div>
 
         <div class="login-card">
@@ -89,16 +95,22 @@
         <div class="topbar-divider"></div>
 
         <!-- Theme toggle -->
-        <div class="seg-toggle">
-            <button class="seg-toggle-btn active" id="themeDark" onclick="setTheme('dark')">🌙</button>
-            <button class="seg-toggle-btn" id="themeLight" onclick="setTheme('light')">☀️</button>
-        </div>
+        <button class="seg-switch" id="themeSwitch" onclick="toggleTheme()" aria-label="Переключить тему">
+            <span class="seg-switch-track">
+                <span class="seg-switch-opt seg-switch-left">🌙</span>
+                <span class="seg-switch-opt seg-switch-right">☀️</span>
+                <span class="seg-switch-thumb"></span>
+            </span>
+        </button>
 
         <!-- Lang toggle -->
-        <div class="seg-toggle">
-            <button class="seg-toggle-btn active" id="langRu" onclick="setLang('ru')">RU</button>
-            <button class="seg-toggle-btn" id="langEn" onclick="setLang('en')">EN</button>
-        </div>
+        <button class="seg-switch" id="langSwitch" onclick="toggleLang()" aria-label="Переключить язык">
+            <span class="seg-switch-track">
+                <span class="seg-switch-opt seg-switch-left">RU</span>
+                <span class="seg-switch-opt seg-switch-right">EN</span>
+                <span class="seg-switch-thumb"></span>
+            </span>
+        </button>
 
         <div class="topbar-divider"></div>
 

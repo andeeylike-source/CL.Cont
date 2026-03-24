@@ -30,17 +30,25 @@ function setTheme(theme) {
     currentTheme = theme;
     localStorage.setItem('cc_theme', theme);
     document.body.classList.toggle('light', theme === 'light');
-    _syncPair('themeDark',      'themeLight',      theme === 'dark');
-    _syncPair('loginThemeDark', 'loginThemeLight',  theme === 'dark');
+    _syncSwitch('themeSwitch', theme === 'dark');
+    _syncSwitch('loginThemeSwitch', theme === 'dark');
+}
+
+function toggleTheme() {
+    setTheme(currentTheme === 'dark' ? 'light' : 'dark');
 }
 
 /* ─── LANGUAGE ───────────────────────────────── */
 function setLang(lang) {
     currentLang = lang;
     localStorage.setItem('cc_lang', lang);
-    _syncPair('langRu',      'langEn',      lang === 'ru');
-    _syncPair('loginLangRu', 'loginLangEn', lang === 'ru');
+    _syncSwitch('langSwitch', lang === 'ru');
+    _syncSwitch('loginLangSwitch', lang === 'ru');
     _applyTexts(lang);
+}
+
+function toggleLang() {
+    setLang(currentLang === 'ru' ? 'en' : 'ru');
 }
 
 function _applyTexts(lang) {
@@ -145,11 +153,11 @@ function _showApp(email, clan) {
     }
 }
 
-function _syncPair(activeId, inactiveId, firstIsActive) {
-    const a = document.getElementById(activeId);
-    const b = document.getElementById(inactiveId);
-    if (a) a.classList.toggle('active', firstIsActive);
-    if (b) b.classList.toggle('active', !firstIsActive);
+function _syncSwitch(id, leftIsActive) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('is-left', leftIsActive);
+    el.classList.toggle('is-right', !leftIsActive);
 }
 
 function _setText(id, text) {
