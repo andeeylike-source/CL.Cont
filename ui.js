@@ -73,8 +73,8 @@ function requestMagicLink() {
         return;
     }
     pendingMagicEmail = email;
-    document.getElementById('loginStepEmail')?.classList.remove('active');
-    document.getElementById('loginStepConfirm')?.classList.add('active');
+    document.getElementById('loginStepEmail').classList.remove('active');
+    document.getElementById('loginStepConfirm').classList.add('active');
 
     const savedClan = localStorage.getItem('cc_clan') || sessionStorage.getItem('cc_clan') || '';
     const clanInput = document.getElementById('loginClanInput');
@@ -125,8 +125,8 @@ function doLogout() {
     loginEmail = '';
 
     // Возврат к шагу 1
-    document.getElementById('loginStepConfirm')?.classList.remove('active');
-    document.getElementById('loginStepEmail')?.classList.add('active');
+    document.getElementById('loginStepConfirm').classList.remove('active');
+    document.getElementById('loginStepEmail').classList.add('active');
     pendingMagicEmail = '';
 
     // Скрываем приложение, показываем логин
