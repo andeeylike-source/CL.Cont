@@ -73,20 +73,8 @@ function requestMagicLink() {
         return;
     }
     pendingMagicEmail = email;
-    const loginStepEmail = document.getElementById('loginStepEmail');
-    const loginStepConfirm = document.getElementById('loginStepConfirm');
-    if (loginStepEmail && loginStepConfirm) {
-        loginStepEmail.classList.remove('active');
-        loginStepConfirm.classList.add('active');
-    } else {
-        const emailStep = document.getElementById('loginStep1');
-        const confirmStep = document.getElementById('loginStep2');
-        if (emailStep) emailStep.classList.remove('active');
-        if (confirmStep) confirmStep.classList.add('active');
-    }
-
-    const dot2 = document.getElementById('loginDot2');
-    if (dot2) dot2.classList.add('done');
+    document.getElementById('loginStepEmail')?.classList.remove('active');
+    document.getElementById('loginStepConfirm')?.classList.add('active');
 
     const savedClan = localStorage.getItem('cc_clan') || sessionStorage.getItem('cc_clan') || '';
     const clanInput = document.getElementById('loginClanInput');
@@ -137,20 +125,8 @@ function doLogout() {
     loginEmail = '';
 
     // Возврат к шагу 1
-    const loginStepEmail = document.getElementById('loginStepEmail');
-    const loginStepConfirm = document.getElementById('loginStepConfirm');
-    if (loginStepEmail && loginStepConfirm) {
-        loginStepConfirm.classList.remove('active');
-        loginStepEmail.classList.add('active');
-    } else {
-        const emailStep = document.getElementById('loginStep1');
-        const confirmStep = document.getElementById('loginStep2');
-        if (confirmStep) confirmStep.classList.remove('active');
-        if (emailStep) emailStep.classList.add('active');
-    }
-
-    const dot2 = document.getElementById('loginDot2');
-    if (dot2) dot2.classList.remove('done');
+    document.getElementById('loginStepConfirm')?.classList.remove('active');
+    document.getElementById('loginStepEmail')?.classList.add('active');
     pendingMagicEmail = '';
 
     // Скрываем приложение, показываем логин
