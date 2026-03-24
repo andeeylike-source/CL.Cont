@@ -181,6 +181,10 @@ function _shakeInput(input) {
     input.focus();
 }
 
+// Backward compatibility for older cached HTML handlers.
+window.goStep2 = requestMagicLink;
+window.doLogin = confirmMagicLink;
+
 /* ─── INIT ───────────────────────────────────── */
 (function init() {
     setTheme(currentTheme);
