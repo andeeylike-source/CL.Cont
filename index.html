@@ -20,14 +20,20 @@
     <div class="login-wrap">
         <!-- Toggles -->
         <div class="login-top-bar">
-            <div class="seg-toggle">
-                <button class="seg-toggle-btn active" id="loginThemeDark" onclick="setTheme('dark')">🌙</button>
-                <button class="seg-toggle-btn" id="loginThemeLight" onclick="setTheme('light')">☀️</button>
-            </div>
-            <div class="seg-toggle">
-                <button class="seg-toggle-btn active" id="loginLangRu" onclick="setLang('ru')">RU</button>
-                <button class="seg-toggle-btn" id="loginLangEn" onclick="setLang('en')">EN</button>
-            </div>
+            <button class="seg-switch" id="loginThemeSwitch" onclick="toggleTheme()" aria-label="Переключить тему">
+                <span class="seg-switch-track">
+                    <span class="seg-switch-opt seg-switch-left">🌙</span>
+                    <span class="seg-switch-opt seg-switch-right">☀️</span>
+                    <span class="seg-switch-thumb"></span>
+                </span>
+            </button>
+            <button class="seg-switch" id="loginLangSwitch" onclick="toggleLang()" aria-label="Переключить язык">
+                <span class="seg-switch-track">
+                    <span class="seg-switch-opt seg-switch-left">RU</span>
+                    <span class="seg-switch-opt seg-switch-right">EN</span>
+                    <span class="seg-switch-thumb"></span>
+                </span>
+            </button>
         </div>
 
         <div class="login-card">
@@ -39,39 +45,30 @@
             </div>
             <p class="login-subtitle" id="loginSubtitle">Инструмент офицера клана для отслеживания КМ-статистики</p>
 
-            <!-- Прогресс -->
-            <div class="login-progress">
-                <div class="login-progress-dot done" id="loginDot1"></div>
-                <div class="login-progress-dot" id="loginDot2"></div>
-            </div>
-
-            <!-- Шаг 1 — Email -->
-            <div class="login-step active" id="loginStep1">
+            <div class="login-step active" id="loginStepEmail">
                 <div class="login-step-label">
                     <span class="login-step-num">1</span>
                     <span id="loginEmailLabel">Введи email</span>
                 </div>
                 <input type="email" class="login-input" id="loginEmailInput"
                     placeholder="your@email.com"
-                    onkeydown="if(event.key==='Enter') goStep2()">
-                <button class="login-btn" id="loginBtn1" onclick="goStep2()">
-                    <span id="loginBtnText1">Продолжить →</span>
+                    onkeydown="if(event.key==='Enter') requestMagicLink()">
+                <button class="login-btn" id="loginBtn1" onclick="requestMagicLink()">
+                    <span id="loginBtnText1">Отправить ссылку на вход →</span>
                 </button>
-                <p class="login-hint" id="loginHintText">MVP режим — введи любой email</p>
+                <p class="login-hint" id="loginHintText">На почту придёт ссылка для входа</p>
             </div>
 
-            <!-- Шаг 2 — Клан -->
-            <div class="login-step" id="loginStep2">
-                <button class="login-back" onclick="goStep1()">← Назад</button>
+            <div class="login-step" id="loginStepConfirm">
                 <div class="login-step-label">
                     <span class="login-step-num">2</span>
-                    <span id="loginClanLabel">Название клана</span>
+                    <span id="loginClanLabel">Клан (только при первом входе)</span>
                 </div>
                 <input type="text" class="login-input" id="loginClanInput"
                     placeholder="[TAG] или название клана"
-                    onkeydown="if(event.key==='Enter') doLogin()">
-                <button class="login-btn" id="loginBtn2" onclick="doLogin()">
-                    <span id="loginBtnText2">Войти в Clan Control →</span>
+                    onkeydown="if(event.key==='Enter') confirmMagicLink()">
+                <button class="login-btn" id="loginBtn2" onclick="confirmMagicLink()">
+                    <span id="loginBtnText2">Я перешёл по ссылке →</span>
                 </button>
                 <p class="login-hint" id="loginHint2">Можно изменить позже в профиле</p>
             </div>
@@ -89,16 +86,22 @@
         <div class="topbar-divider"></div>
 
         <!-- Theme toggle -->
-        <div class="seg-toggle">
-            <button class="seg-toggle-btn active" id="themeDark" onclick="setTheme('dark')">🌙</button>
-            <button class="seg-toggle-btn" id="themeLight" onclick="setTheme('light')">☀️</button>
-        </div>
+        <button class="seg-switch" id="themeSwitch" onclick="toggleTheme()" aria-label="Переключить тему">
+            <span class="seg-switch-track">
+                <span class="seg-switch-opt seg-switch-left">🌙</span>
+                <span class="seg-switch-opt seg-switch-right">☀️</span>
+                <span class="seg-switch-thumb"></span>
+            </span>
+        </button>
 
         <!-- Lang toggle -->
-        <div class="seg-toggle">
-            <button class="seg-toggle-btn active" id="langRu" onclick="setLang('ru')">RU</button>
-            <button class="seg-toggle-btn" id="langEn" onclick="setLang('en')">EN</button>
-        </div>
+        <button class="seg-switch" id="langSwitch" onclick="toggleLang()" aria-label="Переключить язык">
+            <span class="seg-switch-track">
+                <span class="seg-switch-opt seg-switch-left">RU</span>
+                <span class="seg-switch-opt seg-switch-right">EN</span>
+                <span class="seg-switch-thumb"></span>
+            </span>
+        </button>
 
         <div class="topbar-divider"></div>
 

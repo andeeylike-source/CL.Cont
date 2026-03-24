@@ -241,10 +241,80 @@
       : 'This action requires the full app.js. The emergency version is loaded now.'));
   }
 
+  function setImportStatus(message, ok) {
+    const el = document.getElementById('importStatus');
+    if (!el) {
+      alert(message);
+      return;
+    }
+    el.style.display = 'block';
+    el.textContent = message;
+    el.style.background = ok ? 'rgba(34,197,94,0.14)' : 'rgba(239,68,68,0.14)';
+    el.style.color = ok ? '#22c55e' : '#f87171';
+    el.style.border = ok ? '1px solid rgba(34,197,94,0.35)' : '1px solid rgba(239,68,68,0.35)';
+  }
+
+  function exportData() {
+    const storageDump = {};
+    Object.keys(localStorage).forEach((k) => {
+      storageDump[k] = localStorage.getItem(k);
+    });
+
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      source: 'ClanControl-recovery-ui',
+      version: 1,
+      localStorage: storageDump
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `clancontrol-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    setImportStatus(state.language === 'ru' ? 'Экспорт выполнен успешно.' : 'Export completed successfully.', true);
+  }
+
+  function importData(event) {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function () {
+      try {
+        const parsed = JSON.parse(String(reader.result || '{}'));
+        const data = parsed?.localStorage;
+        if (!data || typeof data !== 'object') {
+          throw new Error('Invalid backup format');
+        }
+
+        Object.entries(data).forEach(([k, v]) => {
+          localStorage.setItem(k, v == null ? '' : String(v));
+        });
+
+        setImportStatus(state.language === 'ru'
+          ? 'Импорт завершён. Обновляю интерфейс…'
+          : 'Import completed. Refreshing UI…', true);
+
+        setTimeout(() => location.reload(), 500);
+      } catch (err) {
+        setImportStatus(state.language === 'ru'
+          ? 'Ошибка импорта: неверный JSON файл.'
+          : 'Import failed: invalid JSON file.', false);
+      }
+    };
+    reader.readAsText(file);
+  }
+
   window.showPage = showPage;
   window.changeMonth = function () { renderCalendarPreview(); };
   window.openDayModal = function () { noOpNotice(); };
-  window.exportData = function () { noOpNotice(state.language === 'ru' ? 'Экспорт отключён: нет оригинальной логики.' : 'Export disabled: original logic is missing.'); };
+  window.exportData = exportData;
+  window.importData = importData;
   window.findAllDuplicates = window.clearAllNew = window.unverifyAll = window.resetAllStats = window.openPlayerModal = window.createNewPack = window.clearPeriod = window.openDatePicker = window.debugSnapshotData = window.toggleProfaDropdown = window.closeOnboarding = window.closeProfaAssign = window.saveProfaAssign = function () { noOpNotice(); };
   window.signInWithMagicLink = window.signOutUser = window.saveProfileSettings = function () { noOpNotice(state.language === 'ru' ? 'Supabase-логика отключена в аварийной версии.' : 'Supabase logic is disabled in the emergency version.'); };
 
