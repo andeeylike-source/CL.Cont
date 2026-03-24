@@ -4,26 +4,27 @@ const UI_TEXTS = {
     ru: {
         loginSubtitle:  'Инструмент офицера клана для отслеживания КМ-статистики',
         loginEmailLabel:'Введи email',
-        loginClanLabel: 'Название клана',
-        loginBtnText1:  'Продолжить →',
-        loginBtnText2:  'Войти в Clan Control →',
-        loginHintText:  'MVP режим — введи любой email',
-        loginHint2:     'Можно изменить позже в профиле',
+        loginClanLabel: 'Клан (только при первом входе)',
+        loginBtnText1:  'Отправить ссылку на вход →',
+        loginBtnText2:  'Я перешёл по ссылке →',
+        loginHintText:  'На почту придёт ссылка для входа',
+        loginHint2:     'Если клан уже был сохранён — поле можно пропустить',
     },
     en: {
         loginSubtitle:  'Clan officer toolkit for tracking war statistics',
         loginEmailLabel:'Enter your email',
-        loginClanLabel: 'Clan name or tag',
-        loginBtnText1:  'Continue →',
-        loginBtnText2:  'Enter Clan Control →',
-        loginHintText:  'MVP mode — enter any email',
-        loginHint2:     'You can change this in your profile later',
+        loginClanLabel: 'Clan (first login only)',
+        loginBtnText1:  'Send magic link →',
+        loginBtnText2:  'I clicked the link →',
+        loginHintText:  'We will send a secure sign-in link to your email',
+        loginHint2:     'Skip clan input if it was already saved before',
     }
 };
 
 let currentTheme = localStorage.getItem('cc_theme') || 'dark';
 let currentLang  = localStorage.getItem('cc_lang')  || 'ru';
 let loginEmail   = '';
+let pendingMagicEmail = '';
 
 /* ─── THEME ─────────────────────────────────── */
 function setTheme(theme) {
@@ -63,35 +64,42 @@ function _applyTexts(lang) {
 }
 
 /* ─── LOGIN STEPS ────────────────────────────── */
-function goStep2() {
+function requestMagicLink() {
     const input = document.getElementById('loginEmailInput');
     const email = (input ? input.value : '').trim();
-    const t = UI_TEXTS[currentLang] || UI_TEXTS.ru;
 
     if (!email || !email.includes('@')) {
         _shakeInput(input);
         return;
     }
-    loginEmail = email;
+    pendingMagicEmail = email;
+    document.getElementById('loginStepEmail').classList.remove('active');
+    document.getElementById('loginStepConfirm').classList.add('active');
 
-    // Переход к шагу 2
-    document.getElementById('loginStep1').classList.remove('active');
-    document.getElementById('loginStep2').classList.add('active');
-    document.getElementById('loginDot2').classList.add('done');
-
+    const savedClan = localStorage.getItem('cc_clan') || sessionStorage.getItem('cc_clan') || '';
     const clanInput = document.getElementById('loginClanInput');
-    if (clanInput) clanInput.focus();
+    const clanLabel = document.getElementById('loginClanLabel');
+    if (clanInput) {
+        clanInput.value = savedClan;
+        clanInput.style.display = savedClan ? 'none' : '';
+    }
+    if (clanLabel) clanLabel.style.display = savedClan ? 'none' : '';
 }
 
-function goStep1() {
-    document.getElementById('loginStep2').classList.remove('active');
-    document.getElementById('loginStep1').classList.add('active');
-    document.getElementById('loginDot2').classList.remove('done');
-}
+function confirmMagicLink() {
+    loginEmail = pendingMagicEmail;
+    if (!loginEmail) return;
 
-function doLogin() {
     const clanInput  = document.getElementById('loginClanInput');
-    const clanName   = clanInput ? clanInput.value.trim() : '';
+    const savedClan  = localStorage.getItem('cc_clan') || sessionStorage.getItem('cc_clan') || '';
+    const clanName   = (clanInput && clanInput.style.display !== 'none')
+        ? clanInput.value.trim()
+        : savedClan;
+
+    if (!clanName) {
+        _shakeInput(clanInput);
+        return;
+    }
 
     // Сохраняем сессию
     sessionStorage.setItem('cc_user',  loginEmail);
@@ -117,8 +125,9 @@ function doLogout() {
     loginEmail = '';
 
     // Возврат к шагу 1
-    goStep1();
-    document.getElementById('loginDot2').classList.remove('done');
+    document.getElementById('loginStepConfirm').classList.remove('active');
+    document.getElementById('loginStepEmail').classList.add('active');
+    pendingMagicEmail = '';
 
     // Скрываем приложение, показываем логин
     document.getElementById('topbar').classList.add('hidden');
